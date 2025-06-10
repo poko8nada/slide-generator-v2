@@ -1,25 +1,26 @@
 'use server'
 
 import { revalidateTag } from 'next/cache'
-import { deleteMdData } from '@/lib/mdData-crud'
+import { updateMdData } from '@/lib/mdData-crud'
 import type { Session } from 'next-auth'
 import type { serverResponseResult } from '@/lib/type'
 
-export default async function handleDeleteMdData(
+export default async function handleCreateNewMdData(
   id: string,
+  body: string,
   session: Session | null,
 ): Promise<serverResponseResult> {
   try {
-    await deleteMdData(id, session)
+    await updateMdData(id, body, session)
     revalidateTag('mdDatas')
     return {
       status: 'success',
-      message: '削除しました。',
+      message: '保存しました。',
     }
-  } catch (e) {
+  } catch (error) {
     return {
       status: 'error',
-      message: String(e) || '削除に失敗しました。',
+      message: String(error) || '保存に失敗しました。',
     }
   }
 }

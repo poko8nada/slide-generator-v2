@@ -7,8 +7,6 @@ import { initialMarketingBody } from '@/lib/relative-md-data-pvd'
 export function useInitialDataSync(allMdDatas: MdData[]) {
   const { updateMdBody, updateMdData, mdData, isNew } = useMdData()
 
-  console.log('isNew', isNew)
-
   const initialMdData =
     (isNew && allMdDatas[0]) ||
     allMdDatas.find(s => s.id === mdData.id) ||

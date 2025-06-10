@@ -1,0 +1,1 @@
+ALTER TABLE `user` ADD `isPro` integer DEFAULT false NOT NULL;
