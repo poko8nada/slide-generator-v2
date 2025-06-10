@@ -7,11 +7,12 @@ import { options } from './markdownAction'
 import { useUnsavedChanges, useInitialDataSync } from './useEditMarkdownEffects'
 import useMde from './useMde'
 import { Save } from 'lucide-react'
-import { updateMdData, type MdData } from '@/lib/mdData-crud'
+import type { MdData } from '@/lib/mdData-crud'
 import type { Session } from 'next-auth'
 import { toastError, toastSuccess } from '@/components/custom-toast'
 import CustomSubmitButton from '@/components/custom-submit-button'
 import Form from 'next/form'
+import handleCreateNewMdData from './handle-update-mdData'
 
 export default function EditMarkdown({
   allMdDatas,
@@ -46,15 +47,16 @@ export default function EditMarkdown({
       {initialMdData && (
         <Form
           action={async () => {
-            try {
-              await updateMdData(mdData.id, mdData.body, session)
-              markAsSaved()
-              toastSuccess('保存しました')
-            } catch (e) {
-              toastError(
-                e instanceof Error ? e : new Error('保存に失敗しました'),
-              )
+            const result = await handleCreateNewMdData(
+              mdData.id,
+              mdData.body,
+              session,
+            )
+            if (result.status === 'error') {
+              toastError(result.message)
             }
+            markAsSaved()
+            toastSuccess(result.message)
           }}
         >
           <CustomSubmitButton
