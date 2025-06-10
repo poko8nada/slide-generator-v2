@@ -20,12 +20,13 @@ export default function DisplaySlideItemOnSheet({
 }) {
   const { mdData } = useMdData()
   return (
-    <div className='mt-4'>
-      <div className='grid grid-cols-2 gap-x-4 px-4 py-2 font-semibold text-sm text-gray-500 border-b'>
+    <div className='mt-4 overflow-y-auto'>
+      <div className='grid grid-cols-2 gap-x-4 px-4 py-2 font-semibold text-sm text-gray-500 sticky top-0 bg-white z-10'>
         <span>ファイル名</span>
         <span className='text-right'>最終更新日</span>
       </div>
-      <div>
+      <div className='h-3 w-full bg-gradient-to-b from-black/10 to-transparent pointer-events-none z-[9] sticky top-[36px]' />
+      <div className='mt-[-15px]'>
         {mdDatas.map(item => {
           return (
             <div
