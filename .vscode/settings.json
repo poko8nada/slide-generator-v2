@@ -1,0 +1,26 @@
+{
+	"files.associations": {
+		"wrangler.json": "jsonc"
+	},
+	"cSpell.words": [
+		"adipiscing",
+		"Donec",
+		"easymde",
+		"hljs",
+		"indexh",
+		"lectus",
+		"libsql",
+		"loermm",
+		"Marp",
+		"mauris",
+		"nestedarrow",
+		"nowrap",
+		"oklch",
+		"simplemde",
+		"slidechanged",
+		"sonner",
+		"Supabase",
+		"TURSO",
+		"usehooks"
+	]
+}

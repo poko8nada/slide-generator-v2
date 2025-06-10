@@ -1,0 +1,391 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --animate-toast: slide 4s ease !important;
+}
+
+@keyframes slide {
+  0% {
+    top: -180px;
+  }
+  20% {
+    /* transform: translateY(0px); */
+    top: 12px;
+  }
+  60% {
+    /* transform: translateY(0px); */
+    top: 12px;
+  }
+  100% {
+    /* transform: translateY(0px); */
+    top: 12px;
+    display: none;
+  }
+}
+
+:root {
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* --- reveal印刷用スタイル（重複・冗長整理済み） --- */
+.reveal.center .slides section p img {
+  overflow: hidden;
+  width: auto;
+  margin: 0 auto;
+  object-fit: contain;
+}
+.reveal.center .slides section p code {
+  font-size: .8em;
+  background-color: #272822;
+  color: #f92672;
+  padding: .15em;
+}
+
+:root {
+  /* baseは4:3 */
+  --reveal-base-width: 400px;
+  --reveal-custom-width: 310px;
+  --reveal-custom-height: calc(300px / 400 * 300);
+  --reveal-custom-up-scale: calc(400 / 310);
+  --reveal-custom-down-scale: calc(310 / 400);
+  /* --reveal-custom-left: calc(-400px * (1 - 300 / 400) / 2); */
+}
+
+.reveal-print {
+  height: 100%;
+  width: 100%;
+}
+
+/* 印刷時に非表示にする要素 */
+.reveal-print .nestedarrow,
+.reveal-print .reveal .controls,
+.reveal-print .reveal .playback,
+.reveal-print .reveal .progress,
+.reveal-print .reveal.overview,
+.reveal-print .state-background,
+.reveal-print .aria-status {
+  display: none !important;
+}
+
+/* reveal本体・スライド領域の調整 */
+.reveal-print .reveal {
+  height: auto !important;
+  overflow: hidden !important;
+  width: auto !important;
+}
+.reveal-print .reveal .slides {
+  height: auto !important;
+  position: static;
+  width: 100% !important;
+  zoom: 1 !important;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, calc(var(--reveal-custom-width)));
+  grid-gap: 1.5rem;
+  justify-content: center; /* 全体を中央に */
+  align-content: start;
+  left: auto;
+  margin: 0 !important;
+  overflow: visible;
+  padding: 0 !important;
+  perspective: none;
+  perspective-origin: 50% 50%;
+  pointer-events: auto;
+  top: auto;
+}
+
+/* .pdf-page サイズ・共通化 */
+.reveal-print .reveal .slides div.pdf-page {
+  width: var(--reveal-custom-width);
+  height: var(--reveal-custom-height);
+  overflow: hidden;
+  page-break-after: always;
+  position: relative;
+  z-index: 1;
+}
+.reveal-print .reveal .slides div.pdf-page:last-of-type {
+  page-break-after: avoid;
+}
+
+/* sectionの基本スタイル */
+.reveal-print .reveal .slides div.pdf-page section {
+  box-sizing: border-box !important;
+  margin: 0 auto !important;
+  min-height: 1px;
+  opacity: 1 !important;
+  display: block !important;
+  transform: translateY(-50%);
+  height: min-content !important;
+  position: absolute !important;
+  top: 50%;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  /* padding: .25rem !important;
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start; */
+  width: 92%;
+  transform-style: flat !important;
+  visibility: visible !important;
+}
+
+/* タイトル系のフォントサイズ・マージン */
+.reveal-print .reveal .slides div.pdf-page h1,
+.reveal-print .reveal .slides div.pdf-page h2,
+.reveal-print .reveal .slides div.pdf-page h3,
+.reveal-print .reveal .slides div.pdf-page h4 {
+  margin-bottom: .3rem !important;
+}
+.reveal-print .reveal .slides div.pdf-page h1 {
+  font-size: calc(2.4rem * var(--reveal-custom-down-scale)) !important;
+}
+.reveal-print .reveal .slides div.pdf-page h2 {
+  font-size: calc(1.5rem * var(--reveal-custom-down-scale)) !important;
+}
+.reveal-print .reveal .slides div.pdf-page h3 {
+  font-size: calc(1.3rem * var(--reveal-custom-down-scale)) !important;
+}
+.reveal-print .reveal .slides div.pdf-page h4 {
+  font-size: calc(1.1rem * var(--reveal-custom-down-scale)) !important;
+}
+
+/* テキスト系のフォントサイズ */
+.reveal-print .reveal .slides div.pdf-page *,
+.reveal-print .reveal .slides div.pdf-page p,
+.reveal-print .reveal .slides div.pdf-page li,
+.reveal-print .reveal .slides div.pdf-page pre,
+.reveal-print .reveal .slides div.pdf-page span,
+.reveal-print .reveal .slides div.pdf-page strong,
+.reveal-print .reveal .slides div.pdf-page em,
+.reveal-print .reveal .slides div.pdf-page td {
+  font-size: calc(1rem * var(--reveal-custom-down-scale)) !important;
+}
+
+/* p, pre のマージン共通化 */
+.reveal-print .reveal .slides div.pdf-page p,
+.reveal-print .reveal .slides div.pdf-page pre,
+.reveal-print .reveal .slides blockquote,
+.reveal-print .reveal .slides div.pdf-page pre:has(code) {
+  margin: .4em auto !important;
+}
+
+.reveal-print .reveal .slides div.pdf-page li p {
+  margin: 0 !important;
+}
+
+/* 半角カンマ用のnowrapスタイル */
+.reveal-print .reveal .slides div.pdf-page .nowrap-comma {
+  white-space: nowrap;
+}
+
+/* code, code span の共通化 */
+.reveal-print .reveal .slides div.pdf-page pre code,
+.reveal-print .reveal .slides div.pdf-page pre code span {
+  margin: 0 !important;
+  font-size: calc(.7rem * var(--reveal-custom-down-scale)) !important;
+  line-height: 1.25;
+}
+.reveal-print .reveal .slides div.pdf-page pre code {
+  padding: .75em;
+}
+.reveal-print .reveal .slides div.pdf-page blockquote {
+  padding: .5em;
+}
+
+/* その他の印刷用調整 */
+.reveal-print .reveal pre code {
+  overflow: hidden !important;
+}
+
+.reveal-print .reveal div.pdf-page.stack {
+  height: auto !important;
+  margin: 0 !important;
+  min-height: auto !important;
+  padding: 0 !important;
+  page-break-after: avoid !important;
+  position: relative !important;
+}
+.reveal-print .reveal img {
+  box-shadow: none;
+}
+.reveal-print .reveal .backgrounds {
+  display: none;
+}
+.reveal-print .reveal .slide-background {
+  display: block !important;
+  height: 100%;
+  left: 0;
+  position: absolute;
+  top: 0;
+  width: 100%;
+  z-index: auto !important;
+}
+.reveal-print .reveal.show-notes {
+  max-height: none;
+  max-width: none;
+}
+.reveal-print .reveal .speaker-notes-pdf {
+  bottom: auto;
+  display: block;
+  height: auto;
+  left: auto;
+  max-height: none;
+  right: auto;
+  top: auto;
+  width: 100%;
+  z-index: 100;
+}
+.reveal-print .reveal .speaker-notes-pdf[data-layout="separate-page"] {
+  background-color: transparent;
+  border: 0;
+  color: inherit;
+  padding: 20px;
+  page-break-after: always;
+  position: relative;
+}
+.reveal-print .reveal .slide-number-pdf {
+  display: block;
+  font-size: 14px;
+  position: absolute;
+  visibility: visible;
+}
+/* --- CodeMirror 高さ指定（集約） --- */
+:root {
+  --codemirror-height-sm: 300px;
+  --codemirror-height-md: 355px;
+  --codemirror-height-lg: 380px;
+}
+.CodeMirror-scroll {
+  overscroll-behavior-y: contain;
+  height: var(--codemirror-height-sm) !important;
+}
+@media (min-width: 1024px) {
+  .CodeMirror-scroll {
+    height: var(--codemirror-height-md) !important;
+  }
+}
+@media (min-width: 1280px) {
+  .CodeMirror-scroll {
+    height: var(--codemirror-height-lg) !important;
+  }
+}
+.editor-statusbar {
+  display: none;
+  visibility: hidden;
+}

@@ -1,0 +1,1 @@
+ALTER TABLE `slide` ADD `userId` text NOT NULL REFERENCES user(id);
