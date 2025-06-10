@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidateTag } from 'next/cache'
-import { deleteSlide } from '@/lib/slide-crud'
+import { deleteMdData } from '@/lib/mdData-crud'
 import type { Session } from 'next-auth'
 
 export default async function handleDeleteSlide(
@@ -9,8 +9,8 @@ export default async function handleDeleteSlide(
   session: Session | null,
 ) {
   try {
-    await deleteSlide(id, session)
-    revalidateTag('slides')
+    await deleteMdData(id, session)
+    revalidateTag('mdDatas')
   } catch (e) {
     throw e instanceof Error ? e : new Error('削除に失敗しました')
   }

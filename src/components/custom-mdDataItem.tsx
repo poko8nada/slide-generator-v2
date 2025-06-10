@@ -1,32 +1,32 @@
 'use client'
 import { Label } from '@/components/ui/label'
-import type { Slide } from '@/lib/slide-crud'
+import type { MdData } from '@/lib/mdData-crud'
 import { useMdData } from '@/providers/md-data-provider'
 import { confirmUnsaved } from '@/lib/unsaved-warning'
 
-export default function CustomSlideItem({
-  slide,
+export default function CustomMdDataItem({
+  mdData,
 }: {
-  slide: Slide
+  mdData: MdData
 }) {
-  if (!slide) return null
+  if (!mdData) return null
 
-  const { updateMdData, isDiff, mdData, setIsNew } = useMdData()
-  const { id, title, updatedAt } = slide
+  const { updateMdData, isDiff, mdData: selectedMdData, setIsNew } = useMdData()
+  const { id, title, updatedAt } = mdData
 
-  const handleSlideSelect = () => {
+  const handleMdDataSelect = () => {
     if (!confirmUnsaved(isDiff)) return
-    updateMdData(slide)
+    updateMdData(mdData)
     setIsNew(false)
   }
 
   return (
     <div
       className='flex items-center w-full'
-      onClick={handleSlideSelect}
+      onClick={handleMdDataSelect}
       onKeyDown={e => {
         if ((e.key === 'Enter' || e.key === ' ') && confirmUnsaved(isDiff)) {
-          updateMdData(slide)
+          updateMdData(mdData)
           setIsNew(false)
         }
       }}
@@ -36,9 +36,9 @@ export default function CustomSlideItem({
           type='radio'
           value={id}
           id={id}
-          name='allSlide'
+          name='allMdData'
           className='sr-only'
-          defaultChecked={mdData.id === id}
+          defaultChecked={selectedMdData.id === id}
         />
         <p className='text-left text-sm'>{title ?? '無題'}</p>
         <p className='text-right text-sm text-muted-foreground'>
