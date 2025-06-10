@@ -4,7 +4,7 @@ import { revalidateTag } from 'next/cache'
 import { deleteMdData } from '@/lib/mdData-crud'
 import type { Session } from 'next-auth'
 
-export default async function handleDeleteSlide(
+export default async function handleDeleteMdData(
   id: string,
   session: Session | null,
 ) {

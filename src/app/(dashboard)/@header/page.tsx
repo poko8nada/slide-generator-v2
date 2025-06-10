@@ -3,7 +3,7 @@ import GeneralHeader from '@/components/general-header'
 import HeaderLogo from '@/components/header-logo'
 import ControlUserAction from '@/feature/control-user-action'
 import DisplaySheet from '@/feature/display-sheet'
-import DisplaySlideItemOnSheet from '@/feature/display-mdDataItem-onSheet'
+import DisplayMdDataItemOnSheet from '@/feature/display-mdDataItem-onSheet'
 import { type MdData, getMdDatas } from '@/lib/mdData-crud'
 import {} from '@/components/ui/sheet'
 
@@ -17,7 +17,7 @@ export default async function Page() {
         <div className='flex items-center gap-2'>
           {session && (
             <DisplaySheet session={session}>
-              <DisplaySlideItemOnSheet mdDatas={mdDatas} session={session} />
+              <DisplayMdDataItemOnSheet mdDatas={mdDatas} session={session} />
             </DisplaySheet>
           )}
           <HeaderLogo />
