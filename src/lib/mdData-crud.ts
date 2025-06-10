@@ -5,7 +5,18 @@ import type { Session } from 'next-auth'
 import { unstable_cache } from 'next/cache'
 import { revalidateTag } from 'next/cache'
 
+export const FREE_LIMIT: number = 10
+export const PRO_LIMIT: number = 100
+
 export type MdData = typeof mdDatas.$inferSelect
+
+export function canCreateMdData(
+  user: Session['user'],
+  currentCount: number,
+): boolean {
+  if (!user) return false
+  return user.isPro ? currentCount < PRO_LIMIT : currentCount < FREE_LIMIT
+}
 
 export const getMdDatas = unstable_cache(
   async (session: Session | null): Promise<MdData[]> => {
@@ -86,15 +97,30 @@ export async function createMdData(
   session: Session | null,
   title = 'New mdData',
 ): Promise<MdData> {
-  if (!session?.user?.id) {
+  const user = session?.user
+
+  if (!user?.id) {
     throw new Error('ユーザー情報がありません（未ログイン）')
+  }
+
+  const currentCount = await db
+    .select()
+    .from(mdDatas)
+    .where(eq(mdDatas.userId, user.id))
+    .then(rows => rows.length)
+  if (!canCreateMdData(user, currentCount)) {
+    throw new Error(
+      user.isPro
+        ? `保存上限(${PRO_LIMIT})に達しています`
+        : `保存上限(${FREE_LIMIT})に達しています`,
+    )
   }
   try {
     const date = new Date()
     const [inserted] = await db
       .insert(mdDatas)
       .values({
-        userId: session.user.id,
+        userId: user.id,
         title,
         body: '',
         createdAt: date,

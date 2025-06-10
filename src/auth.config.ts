@@ -1,14 +1,13 @@
 import type { NextAuthConfig } from 'next-auth'
-import type { JWT } from 'next-auth'
+import type { JWT, DefaultSession } from 'next-auth'
 import Google from 'next-auth/providers/google'
 
 // Session を拡張
 declare module 'next-auth' {
   interface Session {
     idToken: string
-    user?: {
+    user?: DefaultSession['user'] & {
       isPro?: boolean
-      [key: string]: unknown
     }
   }
 }
