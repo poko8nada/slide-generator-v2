@@ -32,7 +32,7 @@ const client = createClient({
 })
 export const db = drizzle(client)
 // スライドテーブル定義
-export const slides = sqliteTable('slide', {
+export const mdDatas = sqliteTable('md_data', {
   id: text('id')
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),

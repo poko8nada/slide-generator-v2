@@ -1,18 +1,18 @@
 import { auth } from '@/auth'
 import EditMarkdown from '@/feature/edit-markdown'
-import { type Slide, getSlides } from '@/lib/slide-crud'
+import { type MdData, getMdDatas } from '@/lib/mdData-crud'
 
 export default async function MarkdownPage() {
   const session = await auth()
 
-  let allSlide: Slide[]
+  let allMdDatas: MdData[]
 
   if (session) {
-    const slides: Slide[] = await getSlides(session)
-    allSlide = slides
+    const slides: MdData[] = await getMdDatas(session)
+    allMdDatas = slides
   } else {
-    allSlide = []
+    allMdDatas = []
   }
 
-  return <EditMarkdown allSlide={allSlide} session={session} />
+  return <EditMarkdown allMdDatas={allMdDatas} session={session} />
 }
