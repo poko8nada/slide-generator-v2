@@ -29,6 +29,13 @@
       "when": 1749521965043,
       "tag": "0003_funny_annihilus",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1749526945073,
+      "tag": "0004_secret_talon",
+      "breakpoints": true
     }
   ]
 }

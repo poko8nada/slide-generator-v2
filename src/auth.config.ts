@@ -6,6 +6,10 @@ import Google from 'next-auth/providers/google'
 declare module 'next-auth' {
   interface Session {
     idToken: string
+    user?: {
+      isPro?: boolean
+      [key: string]: unknown
+    }
   }
 }
 
@@ -13,6 +17,7 @@ declare module 'next-auth' {
 declare module 'next-auth' {
   interface JWT {
     idToken: string
+    isPro?: boolean
   }
 }
 
@@ -26,12 +31,18 @@ export default {
       if (user && account?.id_token) {
         token.idToken = account?.id_token
       }
+      if (user && 'isPro' in user) {
+        token.isPro = user.isPro
+      }
       return token
     },
     async session({ token, session }) {
       session.idToken = (token as unknown as JWT).idToken
       if (session.user && token.id) {
         session.user.id = token.id as string
+      }
+      if (session.user && 'isPro' in token) {
+        session.user.isPro = Boolean(token.isPro)
       }
       return session
     },
