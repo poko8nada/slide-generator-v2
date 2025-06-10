@@ -1,5 +1,5 @@
 'use client'
-import type { Slide } from '@/lib/slide-crud'
+import type { MdData } from '@/lib/mdData-crud'
 import type React from 'react'
 import {
   type ReactNode,
@@ -14,7 +14,7 @@ import {
 } from '@/lib/unsaved-warning'
 
 const today = new Date()
-const initialMdData: Slide = {
+const initialMdData: MdData = {
   id: 'example_0001',
   userId: '',
   title: '📚マークダウンで簡単スライド作成',
@@ -24,20 +24,19 @@ const initialMdData: Slide = {
 }
 
 // コンテキスト定義
-const MdDataContext = createContext<
-  | {
-      mdData: Slide
-      updateMdData: (data: Slide) => void
-      updateMdBody: (body: string) => void
-      activeSlideIndex: number
-      setActiveSlideIndex: React.Dispatch<React.SetStateAction<number>>
-      isDiff: boolean
-      setIsDiff: React.Dispatch<React.SetStateAction<boolean>>
-      isNew: boolean
-      setIsNew: React.Dispatch<React.SetStateAction<boolean>>
-    }
-  | undefined
->(undefined)
+type MdDataContextType = {
+  mdData: MdData
+  updateMdData: (data: MdData) => void
+  updateMdBody: (body: string) => void
+  activeSlideIndex: number
+  setActiveSlideIndex: React.Dispatch<React.SetStateAction<number>>
+  isDiff: boolean
+  setIsDiff: React.Dispatch<React.SetStateAction<boolean>>
+  isNew: boolean
+  setIsNew: React.Dispatch<React.SetStateAction<boolean>>
+}
+
+const MdDataContext = createContext<MdDataContextType | undefined>(undefined)
 
 // Provider component
 export const MdDataProvider = ({
@@ -47,7 +46,7 @@ export const MdDataProvider = ({
   children: ReactNode
   isLoggedIn: boolean
 }) => {
-  const [mdData, setMdData] = useState<Slide>(initialMdData)
+  const [mdData, setMdData] = useState<MdData>(initialMdData)
   const [activeSlideIndex, setActiveSlideIndex] = useState(0)
   const [isDiff, setIsDiff] = useState(false)
   const [isNew, setIsNew] = useState(false)
@@ -55,11 +54,11 @@ export const MdDataProvider = ({
   useUnsavedBeforeUnload(isDiff, isLoggedIn)
   useUnsavedRouteChange(isDiff, isLoggedIn)
 
-  const updateMdData = (data: Slide) => {
+  const updateMdData = (data: MdData) => {
     setMdData(data)
   }
   const updateMdBody = useCallback((body: string) => {
-    setMdData((prev: Slide) => ({ ...prev, body }))
+    setMdData((prev: MdData) => ({ ...prev, body }))
   }, [])
 
   return (
@@ -82,7 +81,7 @@ export const MdDataProvider = ({
 }
 
 // カスタムフック
-export const useMdData = () => {
+export const useMdData = (): MdDataContextType => {
   const context = useContext(MdDataContext)
   if (!context) {
     throw new Error('useMdData must be used within an MdDataProvider')
