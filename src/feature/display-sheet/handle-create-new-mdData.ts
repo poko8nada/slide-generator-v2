@@ -5,11 +5,11 @@ import { createMdData } from '@/lib/mdData-crud'
 import { toastError } from '@/components/custom-toast'
 import type { Session } from 'next-auth'
 
-export default async function handleCreateNewSlide(session: Session | null) {
+export default async function handleCreateNewMdData(session: Session | null) {
   try {
     await createMdData(session)
-    revalidateTag('slides')
+    revalidateTag('mdDatas')
   } catch (e) {
-    toastError(e instanceof Error ? e : new Error('スライド作成に失敗しました'))
+    toastError(e instanceof Error ? e : new Error('作成に失敗しました'))
   }
 }

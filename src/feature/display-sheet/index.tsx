@@ -15,7 +15,7 @@ import CustomSubmitButton from '@/components/custom-submit-button'
 import { FilePlus } from 'lucide-react'
 import type { Session } from 'next-auth'
 import { useState } from 'react'
-import handleCreateNewSlide from './handle-create-newSlide'
+import handleCreateNewMdData from './handle-create-new-mdData'
 import { useMdData } from '@/providers/md-data-provider'
 
 export default function DisplaySheet({
@@ -35,16 +35,16 @@ export default function DisplaySheet({
       </SheetTrigger>
       <SheetContent side='left'>
         <SheetHeader>
-          <SheetTitle className='sr-only'>Slides</SheetTitle>
+          <SheetTitle className='sr-only'>MarkDown</SheetTitle>
           <Form
             action={() => {
-              handleCreateNewSlide(session)
+              handleCreateNewMdData(session)
               setIsNew(true)
               setOpen(false)
             }}
           >
             <CustomSubmitButton icon={<FilePlus />}>
-              new slide
+              new md file
             </CustomSubmitButton>
           </Form>
         </SheetHeader>
