@@ -17,11 +17,15 @@ import type { Session } from 'next-auth'
 import { useState } from 'react'
 import handleCreateNewMdData from './handle-create-new-mdData'
 import { useMdData } from '@/providers/md-data-provider'
+import { MdDataCountIndicator } from '@/components/mdData-count-indicator'
+
+type MdDataCount = { current: number; limit: number; isPro: boolean }
 
 export default function DisplaySheet({
   session,
+  mdDataCount,
   children,
-}: { session: Session; children?: React.ReactNode }) {
+}: { session: Session; mdDataCount: MdDataCount; children?: React.ReactNode }) {
   const [open, setOpen] = useState(false)
   const { setIsNew } = useMdData()
 
@@ -36,17 +40,24 @@ export default function DisplaySheet({
       <SheetContent side='left'>
         <SheetHeader>
           <SheetTitle className='sr-only'>MarkDown</SheetTitle>
-          <Form
-            action={() => {
-              handleCreateNewMdData(session)
-              setIsNew(true)
-              setOpen(false)
-            }}
-          >
-            <CustomSubmitButton icon={<FilePlus />}>
-              new md file
-            </CustomSubmitButton>
-          </Form>
+          <div className='flex gap-1'>
+            <Form
+              action={() => {
+                handleCreateNewMdData(session)
+                setIsNew(true)
+                setOpen(false)
+              }}
+            >
+              <CustomSubmitButton icon={<FilePlus />}>
+                new md file
+              </CustomSubmitButton>
+            </Form>
+            <MdDataCountIndicator
+              current={mdDataCount.current}
+              limit={mdDataCount.limit}
+              isPro={mdDataCount.isPro}
+            />
+          </div>
         </SheetHeader>
         {children}
         <SheetFooter>

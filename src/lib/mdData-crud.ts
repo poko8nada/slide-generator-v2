@@ -4,16 +4,15 @@ import { desc, eq, and } from 'drizzle-orm'
 import type { Session } from 'next-auth'
 import { unstable_cache } from 'next/cache'
 import { revalidateTag } from 'next/cache'
+import { FREE_LIMIT, PRO_LIMIT } from './mdData-constants'
+import type { InferSelectModel } from 'drizzle-orm'
 
-export const FREE_LIMIT: number = 10
-export const PRO_LIMIT: number = 100
+export type MdData = InferSelectModel<typeof mdDatas>
 
-export type MdData = typeof mdDatas.$inferSelect
-
-export function canCreateMdData(
+export async function canCreateMdData(
   user: Session['user'],
   currentCount: number,
-): boolean {
+): Promise<boolean> {
   if (!user) return false
   return user.isPro ? currentCount < PRO_LIMIT : currentCount < FREE_LIMIT
 }
