@@ -1,44 +1,44 @@
 'use server'
-import { db, slides } from '@/db/schema'
+import { db, mdDatas } from '@/db/schema'
 import { desc, eq, and } from 'drizzle-orm'
 import type { Session } from 'next-auth'
 import { unstable_cache } from 'next/cache'
 import { revalidateTag } from 'next/cache'
 
-export type Slide = typeof slides.$inferSelect
+export type MdData = typeof mdDatas.$inferSelect
 
-export const getSlides = unstable_cache(
-  async (session: Session | null): Promise<Slide[]> => {
+export const getMdDatas = unstable_cache(
+  async (session: Session | null): Promise<MdData[]> => {
     if (!session?.user?.id) {
-      console.log('[getSlides] session.user.id is missing')
+      console.log('[getMdDatas] session.user.id is missing')
       return []
     }
     try {
       const result = await db
         .select()
-        .from(slides)
-        .where(eq(slides.userId, session.user.id))
-        .orderBy(desc(slides.updatedAt))
+        .from(mdDatas)
+        .where(eq(mdDatas.userId, session.user.id))
+        .orderBy(desc(mdDatas.updatedAt))
       return result
     } catch (_e) {
-      throw new Error('[getSlides] error')
+      throw new Error('[getMdDatas] error')
     }
   },
-  ['slides'],
+  ['mdDatas'],
   {
-    tags: ['slides'],
+    tags: ['mdDatas'],
   },
 )
 
 /**
- * スライド本文からタイトルを生成
+ * mdData本文からタイトルを生成
  */
-export async function createTitleByBody(body: string): Promise<string> {
+export async function createMdDataTitleByBody(body: string): Promise<string> {
   const trimmedBody = body.trim()
   if (!trimmedBody) return 'Untitled'
 
-  const firstSlide = trimmedBody.split(/(?<=\n|^)---(?=\n|$)/)[0]
-  const cleanText = firstSlide
+  const firstMdData = trimmedBody.split(/(?<=\n|^)---(?=\n|$)/)[0]
+  const cleanText = firstMdData
     .replace(/^#+\s*/, '')
     .replace(/\*\*(.*?)\*\*/g, '$1')
     .replace(/\*(.*?)\*/g, '$1')
@@ -62,7 +62,7 @@ export async function createTitleByBody(body: string): Promise<string> {
     : cleanText || 'Untitled'
 }
 
-export async function updateSlide(
+export async function updateMdData(
   id: string,
   body: string,
   session: Session | null,
@@ -71,28 +71,28 @@ export async function updateSlide(
     throw new Error('ユーザー情報がありません（未ログイン）')
   }
   try {
-    const title = await createTitleByBody(body)
+    const title = await createMdDataTitleByBody(body)
     await db
-      .update(slides)
+      .update(mdDatas)
       .set({ title, body, updatedAt: new Date() })
-      .where(eq(slides.id, String(id)))
-    revalidateTag('slides')
+      .where(eq(mdDatas.id, String(id)))
+    revalidateTag('mdDatas')
   } catch (e) {
-    throw e instanceof Error ? e : new Error('スライド保存に失敗しました')
+    throw e instanceof Error ? e : new Error('mdData保存に失敗しました')
   }
 }
 
-export async function createSlide(
+export async function createMdData(
   session: Session | null,
-  title = 'New slide',
-): Promise<Slide> {
+  title = 'New mdData',
+): Promise<MdData> {
   if (!session?.user?.id) {
     throw new Error('ユーザー情報がありません（未ログイン）')
   }
   try {
     const date = new Date()
     const [inserted] = await db
-      .insert(slides)
+      .insert(mdDatas)
       .values({
         userId: session.user.id,
         title,
@@ -102,30 +102,32 @@ export async function createSlide(
       })
       .returning()
     if (!inserted) {
-      throw new Error('スライド作成に失敗しました')
+      throw new Error('mdData作成に失敗しました')
     }
     return inserted
   } catch (e) {
-    throw e instanceof Error ? e : new Error('スライド作成に失敗しました')
+    throw e instanceof Error ? e : new Error('mdData作成に失敗しました')
   }
 }
 /**
- * スライド削除（認証・権限チェック、削除後revalidateTag）
+ * mdData削除（認証・権限チェック、削除後revalidateTag）
  */
-export async function deleteSlide(id: string, session: Session | null) {
+export async function deleteMdData(id: string, session: Session | null) {
   if (!session?.user?.id) {
     throw new Error('ユーザー情報がありません（未ログイン）')
   }
   try {
-    // 権限チェック: 自分のスライドのみ削除可
+    // 権限チェック: 自分のmdDataのみ削除可
     const result = await db
-      .delete(slides)
-      .where(and(eq(slides.id, String(id)), eq(slides.userId, session.user.id)))
+      .delete(mdDatas)
+      .where(
+        and(eq(mdDatas.id, String(id)), eq(mdDatas.userId, session.user.id)),
+      )
     if (!result) {
-      throw new Error('スライドが見つからないか、権限がありません')
+      throw new Error('mdDataが見つからないか、権限がありません')
     }
-    revalidateTag('slides')
+    revalidateTag('mdDatas')
   } catch (e) {
-    throw e instanceof Error ? e : new Error('スライド削除に失敗しました')
+    throw e instanceof Error ? e : new Error('mdData削除に失敗しました')
   }
 }
