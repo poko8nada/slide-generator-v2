@@ -1,31 +1,31 @@
-import type { Slide } from '@/lib/slide-crud'
+import type { MdData } from '@/lib/mdData-crud'
 import { useEffect, useState } from 'react'
 import { useMdData } from '@/providers/md-data-provider'
 import { initialMarketingBody } from '@/lib/relative-md-data-pvd'
 
 // 初期化・スライド切替時の状態同期
-export function useInitialDataSync(allSlide: Slide[]) {
+export function useInitialDataSync(allMdDatas: MdData[]) {
   const { updateMdBody, updateMdData, mdData, isNew } = useMdData()
 
   console.log('isNew', isNew)
 
-  const initialSlide =
-    (isNew && allSlide[0]) ||
-    allSlide.find(s => s.id === mdData.id) ||
-    allSlide[0] ||
+  const initialMdData =
+    (isNew && allMdDatas[0]) ||
+    allMdDatas.find(s => s.id === mdData.id) ||
+    allMdDatas[0] ||
     null
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
-    if (!initialSlide) {
+    if (!initialMdData) {
       updateMdBody(initialMarketingBody)
     }
-    if (initialSlide) {
-      updateMdData(initialSlide)
+    if (initialMdData) {
+      updateMdData(initialMdData)
     }
-  }, [initialSlide])
+  }, [initialMdData])
 
-  return initialSlide
+  return initialMdData
 }
 
 // 未保存の変更があるかどうかを管理、保存完了時の関数を提供

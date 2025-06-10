@@ -1,6 +1,5 @@
 'use client'
 import MarkdownEditor from '@/components/markdown-editor'
-import type { Slide } from '@/lib/slide-crud'
 import { cn } from '@/lib/utils'
 import { useMdData } from '@/providers/md-data-provider'
 import { useRef } from 'react'
@@ -8,24 +7,24 @@ import { options } from './markdownAction'
 import { useUnsavedChanges, useInitialDataSync } from './useEditMarkdownEffects'
 import useMde from './useMde'
 import { Save } from 'lucide-react'
-import { updateSlide } from '@/lib/slide-crud'
+import { updateMdData, type MdData } from '@/lib/mdData-crud'
 import type { Session } from 'next-auth'
 import { toastError, toastSuccess } from '@/components/custom-toast'
 import CustomSubmitButton from '@/components/custom-submit-button'
 import Form from 'next/form'
 
 export default function EditMarkdown({
-  allSlide,
+  allMdDatas,
   session,
 }: {
-  allSlide: Slide[]
+  allMdDatas: MdData[]
   session: Session | null
 }) {
   const { mdData, updateMdBody, isDiff } = useMdData()
   const mdeRef = useRef<{ getMdeInstance: () => EasyMDE } | null>(null)
 
   useMde(mdeRef)
-  const initialSlide = useInitialDataSync(allSlide)
+  const initialMdData = useInitialDataSync(allMdDatas)
   const { markAsSaved } = useUnsavedChanges()
 
   return (
@@ -44,11 +43,11 @@ export default function EditMarkdown({
         options={options}
         mdeRef={mdeRef}
       />
-      {initialSlide && (
+      {initialMdData && (
         <Form
           action={async () => {
             try {
-              await updateSlide(mdData.id, mdData.body, session)
+              await updateMdData(mdData.id, mdData.body, session)
               markAsSaved()
               toastSuccess('保存しました')
             } catch (e) {
