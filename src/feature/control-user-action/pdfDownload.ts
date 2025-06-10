@@ -1,5 +1,6 @@
 import { toJpeg } from 'html-to-image'
 import jsPDF from 'jspdf'
+import type { serverResponseResult } from '@/lib/type'
 
 function createCloneSlides(slideSnap: HTMLElement[]) {
   const slideClones = slideSnap.map(item =>
@@ -58,9 +59,15 @@ function customListStyle(slide: HTMLElement) {
   }
 }
 
-export async function pdfDownload(slideSnap: HTMLElement[]) {
+export async function pdfDownload(
+  slideSnap: HTMLElement[],
+): Promise<serverResponseResult> {
   const { slideClones, container } = createCloneSlides(slideSnap)
-  if (slideClones.length === 0) return
+  if (slideClones.length === 0)
+    return Promise.resolve({
+      status: 'error',
+      message: 'No slides to download',
+    })
 
   const scale = 3.0
   const formatSize = [
@@ -118,10 +125,10 @@ export async function pdfDownload(slideSnap: HTMLElement[]) {
       pdf.addImage(data, 'JPEG', 0, 0, formatSize[0], formatSize[1])
       pdf.addPage()
     } catch (err) {
-      if (err instanceof Error) {
-        return err
-      }
-      return new Error('Unknown error')
+      return Promise.resolve({
+        status: 'error',
+        message: err instanceof Error ? err.message : String(err),
+      })
     }
   }
 
@@ -129,4 +136,6 @@ export async function pdfDownload(slideSnap: HTMLElement[]) {
   container?.parentNode?.removeChild(container)
   pdf.deletePage(pdf.getNumberOfPages())
   await pdf.save('slide.pdf', { returnPromise: true })
+
+  return Promise.resolve({ status: 'success', message: 'pdf download' })
 }

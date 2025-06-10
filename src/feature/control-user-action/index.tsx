@@ -22,13 +22,14 @@ export default function ControlUserAction({
   const handleClick = async () => {
     if (!slideSnap) return
     setIsLoading(true)
-    const error = await pdfDownload(slideSnap)
-    if (error) {
-      toastError(error)
+    const result = await pdfDownload(slideSnap)
+
+    if (result.status === 'error') {
+      toastError(result.message)
       setIsLoading(false)
       return
     }
-    toastSuccess('download success')
+    toastSuccess(result.message)
     setIsLoading(false)
   }
   return (
