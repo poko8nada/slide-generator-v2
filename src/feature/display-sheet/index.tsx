@@ -18,6 +18,7 @@ import { useState } from 'react'
 import handleCreateNewMdData from './handle-create-new-mdData'
 import { useMdData } from '@/providers/md-data-provider'
 import { MdDataCountIndicator } from '@/components/mdData-count-indicator'
+import { toastSuccess, toastError } from '@/components/custom-toast'
 
 type MdDataCount = { current: number; limit: number; isPro: boolean }
 
@@ -40,15 +41,23 @@ export default function DisplaySheet({
       <SheetContent side='left'>
         <SheetHeader>
           <SheetTitle className='sr-only'>MarkDown</SheetTitle>
-          <div className='flex gap-1'>
+          <div className='flex gap-3'>
             <Form
-              action={() => {
-                handleCreateNewMdData(session)
+              action={async () => {
+                const result = await handleCreateNewMdData(session)
+                if (result.status === 'error') {
+                  toastError(result.message)
+                  return
+                }
+                toastSuccess(result.message)
                 setIsNew(true)
                 setOpen(false)
               }}
             >
-              <CustomSubmitButton icon={<FilePlus />}>
+              <CustomSubmitButton
+                icon={<FilePlus />}
+                disabled={mdDataCount.limit - mdDataCount.current < 1}
+              >
                 new md file
               </CustomSubmitButton>
             </Form>

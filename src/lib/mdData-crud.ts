@@ -107,7 +107,10 @@ export async function createMdData(
     .from(mdDatas)
     .where(eq(mdDatas.userId, user.id))
     .then(rows => rows.length)
-  if (!canCreateMdData(user, currentCount)) {
+
+  console.log('[createMdData] currentCount', currentCount)
+
+  if (!(await canCreateMdData(user, currentCount))) {
     throw new Error(
       user.isPro
         ? `保存上限(${PRO_LIMIT})に達しています`

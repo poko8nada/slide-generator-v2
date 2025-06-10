@@ -9,8 +9,8 @@ export function toastSuccess(message: string) {
   })
 }
 
-export function toastError(error: Error) {
-  return toast.error(`${error}`, {
+export function toastError(message: string) {
+  return toast.error(`${message}`, {
     duration,
     style: { background: 'hsl(0 72.2% 50.6%)', color: '#fff' },
   })
