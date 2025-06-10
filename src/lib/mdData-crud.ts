@@ -3,7 +3,6 @@ import { db, mdDatas } from '@/db/schema'
 import { desc, eq, and } from 'drizzle-orm'
 import type { Session } from 'next-auth'
 import { unstable_cache } from 'next/cache'
-import { revalidateTag } from 'next/cache'
 import { FREE_LIMIT, PRO_LIMIT } from './mdData-constants'
 import type { InferSelectModel } from 'drizzle-orm'
 
@@ -86,7 +85,6 @@ export async function updateMdData(
       .update(mdDatas)
       .set({ title, body, updatedAt: new Date() })
       .where(eq(mdDatas.id, String(id)))
-    revalidateTag('mdDatas')
   } catch (e) {
     throw e instanceof Error ? e : new Error('mdData保存に失敗しました')
   }
@@ -137,9 +135,7 @@ export async function createMdData(
     throw e instanceof Error ? e : new Error('mdData作成に失敗しました')
   }
 }
-/**
- * mdData削除（認証・権限チェック、削除後revalidateTag）
- */
+
 export async function deleteMdData(id: string, session: Session | null) {
   if (!session?.user?.id) {
     throw new Error('ユーザー情報がありません（未ログイン）')
@@ -154,7 +150,6 @@ export async function deleteMdData(id: string, session: Session | null) {
     if (!result) {
       throw new Error('mdDataが見つからないか、権限がありません')
     }
-    revalidateTag('mdDatas')
   } catch (e) {
     throw e instanceof Error ? e : new Error('mdData削除に失敗しました')
   }

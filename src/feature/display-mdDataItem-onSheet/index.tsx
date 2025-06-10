@@ -45,17 +45,13 @@ export default function DisplaySlideItemOnSheet({
                 <Form
                   className=''
                   action={async () => {
-                    try {
-                      if (!window.confirm('本当に削除しますか？')) return
-                      await handleDeleteMdData(item.id, session)
-                      toastSuccess('mdDataを削除しました')
-                    } catch (e) {
-                      toastError(
-                        e instanceof Error
-                          ? e
-                          : new Error('削除に失敗しました'),
-                      )
+                    if (!window.confirm('本当に削除しますか？')) return
+                    const result = await handleDeleteMdData(item.id, session)
+                    if (result.status === 'error') {
+                      toastError(result.message)
+                      return
                     }
+                    toastSuccess(result.message)
                   }}
                 >
                   <CustomSubmitButton

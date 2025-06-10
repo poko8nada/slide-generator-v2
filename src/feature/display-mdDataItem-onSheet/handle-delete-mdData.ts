@@ -3,15 +3,23 @@
 import { revalidateTag } from 'next/cache'
 import { deleteMdData } from '@/lib/mdData-crud'
 import type { Session } from 'next-auth'
+import type { serverResponseResult } from '@/lib/type'
 
 export default async function handleDeleteMdData(
   id: string,
   session: Session | null,
-) {
+): Promise<serverResponseResult> {
   try {
     await deleteMdData(id, session)
     revalidateTag('mdDatas')
+    return {
+      status: 'success',
+      message: '削除しました。',
+    }
   } catch (e) {
-    throw e instanceof Error ? e : new Error('削除に失敗しました')
+    return {
+      status: 'error',
+      message: String(e) || '削除に失敗しました。',
+    }
   }
 }
