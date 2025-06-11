@@ -47,6 +47,26 @@ function pasteAsImageUrl(cm: CodeMirror.Editor, event: ClipboardEvent): void {
   }
 }
 
+function updateActiveSlide(
+  mdDataBody: string | undefined,
+  mdeRef: React.RefObject<{ getMdeInstance: () => EasyMDE } | null>,
+  setActiveSlideIndex: (index: number) => void,
+) {
+  if (!mdDataBody) return
+  if (!mdeRef.current) return
+
+  const mdeInstance = mdeRef.current.getMdeInstance()
+  if (!mdeInstance) return
+
+  const cm = mdeInstance.codemirror
+  const cursor = cm.getCursor()
+  const textBeforeCursor = mdDataBody.slice(0, cm.indexFromPos(cursor))
+  // スライドの区切り(3本のハイフンのみを対象)
+  const slideBreaks = textBeforeCursor.split(/(?<=\n|^)---(?=\n|$)/).length - 1
+  const slideIndex = Math.max(0, slideBreaks)
+  setActiveSlideIndex(slideIndex)
+}
+
 export default function useMde(
   mdeRef: React.RefObject<{ getMdeInstance: () => EasyMDE } | null>,
 ) {
@@ -55,32 +75,12 @@ export default function useMde(
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
-    const updateActiveSlide = () => {
-      try {
-        if (!mdDataBody) return
-        if (!mdeRef.current) return
-
-        const mdeInstance = mdeRef.current?.getMdeInstance()
-        if (!mdeInstance) return
-
-        const cm = mdeInstance.codemirror
-        const cursor = cm.getCursor()
-        const textBeforeCursor = mdDataBody.slice(0, cm.indexFromPos(cursor))
-        //  スライドの区切り(3本のハイフンのみを対象)
-        const slideBreaks =
-          textBeforeCursor.split(/(?<=\n|^)---(?=\n|$)/).length - 1
-        const slideIndex = Math.max(0, slideBreaks)
-        setActiveSlideIndex(slideIndex)
-      } catch (error) {
-        console.error('Error in updateActiveSlide:', error)
-        throw new Error('Failed to update active slide.')
-      }
+    const handleUpdateActiveSlide = () => {
+      updateActiveSlide(mdDataBody, mdeRef, setActiveSlideIndex)
     }
 
     // 画像URLペースト用のハンドラ
     const handlePaste = (cm: CodeMirror.Editor, event: ClipboardEvent) => {
-      console.log(event)
-
       pasteAsImageUrl(cm, event)
     }
 
@@ -90,17 +90,15 @@ export default function useMde(
 
       const cm = mdeInstance.codemirror
       // カーソル移動や編集時にスライドインデックスを更新
-      cm.on('cursorActivity', updateActiveSlide)
-      cm.on('change', updateActiveSlide)
-
+      cm.on('cursorActivity', handleUpdateActiveSlide)
+      cm.on('change', handleUpdateActiveSlide)
       // 画像URLペースト時の処理を追加
       cm.on('paste', handlePaste)
 
       // 初期スライドインデックスを設定
-      updateActiveSlide()
+      handleUpdateActiveSlide()
     } catch (error) {
       console.error('Error during MDE initialization:', error)
-      throw new Error('Failed to initialize MDE.')
     }
 
     return () => {
@@ -109,13 +107,13 @@ export default function useMde(
         if (!mdeInstance) return
 
         const cm = mdeInstance.codemirror
-        cm.off('cursorActivity', updateActiveSlide)
-        cm.off('change', updateActiveSlide)
+        cm.off('cursorActivity', handleUpdateActiveSlide)
+        cm.off('change', handleUpdateActiveSlide)
         // クリーンアップ: ペーストイベントも削除
         cm.off('paste', handlePaste)
       } catch (cleanupError) {
         console.error('Error during MDE cleanup:', cleanupError)
       }
     }
-  }, [mdDataBody, setActiveSlideIndex])
+  }, [mdDataBody])
 }
