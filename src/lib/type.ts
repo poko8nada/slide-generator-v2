@@ -7,3 +7,12 @@ export type ServerResponseResult =
 export type SaveMarkdownResponse =
   | { markdown: string; urls: string[] }
   | { error: string }
+
+// 型を宣言
+export type UploadedImageResult = {
+  original: string
+  uploaded: string
+  cloudflareImageId: string
+}
+
+export type PostResponse = { urls: UploadedImageResult[] } | { error: string }

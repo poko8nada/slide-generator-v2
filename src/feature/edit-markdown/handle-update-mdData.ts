@@ -5,13 +5,14 @@ import { updateMdData } from '@/lib/mdData-crud'
 import type { Session } from 'next-auth'
 import type { ServerResponseResult } from '@/lib/type'
 
-export default async function handleCreateNewMdData(
+export default async function handleUpdateMdData(
   id: string,
   replacedMd: string,
   session: Session | null,
 ): Promise<ServerResponseResult> {
   try {
     await updateMdData(id, replacedMd, session)
+
     revalidateTag('mdDatas')
     return {
       status: 'success',

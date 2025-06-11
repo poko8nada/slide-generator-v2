@@ -2,8 +2,9 @@
 import MarkdownEditor from '@/components/markdown-editor'
 import { cn } from '@/lib/utils'
 import { useMdData } from '@/providers/md-data-provider'
-import { useRef } from 'react'
-import { options } from './markdownAction'
+import { useRef, useMemo } from 'react'
+import type { ImageStore } from './markdownAction'
+import { createOptions } from './markdownAction'
 import { useUnsavedChanges, useInitialDataSync } from './useEditMarkdownEffects'
 import useMde from './useMde'
 import { Save } from 'lucide-react'
@@ -13,7 +14,9 @@ import { toastError, toastSuccess } from '@/components/custom-toast'
 import CustomSubmitButton from '@/components/custom-submit-button'
 import Form from 'next/form'
 import handleUpdateMdData from './handle-update-mdData'
-import type { SaveMarkdownResponse } from '@/lib/type'
+import { fetchAndRegisterExternalImages } from './fetchAndRegisterExternalImages'
+import { handleUpsertImagesToDB } from './handle-upsert-images-to-DB'
+import type { UploadedImageResult } from '@/lib/type'
 
 export default function EditMarkdown({
   allMdDatas,
@@ -25,9 +28,15 @@ export default function EditMarkdown({
   const { mdData, updateMdBody, isDiff } = useMdData()
   const mdeRef = useRef<{ getMdeInstance: () => EasyMDE } | null>(null)
 
+  // 画像管理Map
+  const imageMapRef = useRef<Map<string, ImageStore>>(new Map())
+  // console.log('[EditMarkdown] imageMapRef.current', imageMapRef.current)
+
   useMde(mdeRef)
   const initialMdData = useInitialDataSync(allMdDatas)
   const { markAsSaved } = useUnsavedChanges()
+
+  const options = useMemo(() => createOptions(imageMapRef), [])
 
   return (
     <div
@@ -49,10 +58,25 @@ export default function EditMarkdown({
         <Form
           action={async () => {
             try {
+              // blobは先にimageMapに登録済み
+              // 外部画像fetch→File化→imageMap登録
+              await fetchAndRegisterExternalImages(
+                mdData.body,
+                imageMapRef.current,
+              )
+              console.log('[EditMarkdown] imageMapRef.current', imageMapRef)
+
               // FormData生成
               const formData = new FormData()
-              formData.append('markdown', mdData.body)
-              // 画像データ追加（既存ロジックがあればここで追加）
+              // imageMapから画像データと元URLを配列形式でappend
+              Array.from(imageMapRef.current.entries()).forEach(
+                ([url, store], i) => {
+                  formData.append(`images[${i}]`, store.file)
+                  formData.append(`imageUrls[${i}]`, url)
+                },
+              )
+
+              console.log('[EditMarkdown] formData', formData)
 
               // APIへ送信
               const res = await fetch('/api/documents/save', {
@@ -64,23 +88,26 @@ export default function EditMarkdown({
                 throw new Error('画像アップロードAPI通信エラー')
               }
 
-              const data: SaveMarkdownResponse = await res.json()
-              if ('error' in data) {
-                throw new Error(data.error || '置換済みMarkdown取得失敗')
-              }
-              const replacedMd = data.markdown
+              // APIから元画像URLとアップロードURLのペア配列を受け取る
+              const data: { urls: UploadedImageResult[] } = await res.json()
+              console.log('[EditMarkdown] data', data)
 
-              const result = await handleUpdateMdData(
-                mdData.id,
-                replacedMd,
-                session,
-              )
-              if (result.status === 'error') {
-                toastError(result.message)
-                return
+              // 画像情報をDBにupsert
+              await handleUpsertImagesToDB(data.urls, session, mdData.id)
+
+              // Markdown本文の画像URLをアップロード後のURLで置換
+              let replacedMd = mdData.body
+              for (const img of data.urls) {
+                // img.cloudflareImageId を使って /api/images/[imageId] 形式に置換
+                const apiUrl = `/api/images/${img.cloudflareImageId}`
+                replacedMd = replacedMd.replaceAll(img.original, apiUrl)
               }
+
+              handleUpdateMdData(mdData.id, replacedMd, session)
+              updateMdBody(replacedMd)
+
               markAsSaved()
-              toastSuccess(result.message)
+              toastSuccess('画像アップロード・DB保存・Markdown置換完了')
             } catch (e) {
               toastError(e instanceof Error ? e.message : '保存に失敗しました')
             }

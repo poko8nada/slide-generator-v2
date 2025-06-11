@@ -23,7 +23,13 @@
 
 import { createClient } from '@libsql/client/web'
 import { drizzle } from 'drizzle-orm/libsql/web'
-import { integer, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import {
+  integer,
+  primaryKey,
+  sqliteTable,
+  text,
+  unique,
+} from 'drizzle-orm/sqlite-core'
 import type { AdapterAccountType } from 'next-auth/adapters'
 
 const client = createClient({
@@ -124,19 +130,30 @@ export const authenticators = sqliteTable(
     }),
   ],
 )
-export const images = sqliteTable('images', {
-  id: text('id')
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
-  cloudflareImageId: text('cloudflareImageId').notNull(),
-  userId: text('userId')
-    .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
-  documentId: text('documentId')
-    .notNull()
-    .references(() => mdDatas.id, { onDelete: 'cascade' }),
-  originalFilename: text('originalFilename').notNull(),
-  fileSize: integer('fileSize').notNull(),
-  contentType: text('contentType').notNull(),
-  createdAt: integer('createdAt', { mode: 'timestamp_ms' }).notNull(),
-})
+export const images = sqliteTable(
+  'images',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    cloudflareImageId: text('cloudflareImageId').notNull(),
+    userId: text('userId')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    documentId: text('documentId')
+      .notNull()
+      .references(() => mdDatas.id, { onDelete: 'cascade' }),
+    originalFilename: text('originalFilename').notNull(),
+    fileSize: integer('fileSize').notNull(),
+    contentType: text('contentType').notNull(),
+    createdAt: integer('createdAt', { mode: 'timestamp_ms' }).notNull(),
+  },
+  images => [
+    // Add composite unique index for upsert
+    unique('images_cloudflare_user_doc_unique').on(
+      images.cloudflareImageId,
+      images.userId,
+      images.documentId,
+    ),
+  ],
+)

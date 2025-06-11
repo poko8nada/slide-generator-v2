@@ -1,7 +1,7 @@
 // POST /api/documents/save
 import { type NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import type { SaveMarkdownResponse } from '@/lib/type'
+import type { PostResponse, UploadedImageResult } from '@/lib/type'
 
 const MAX_IMAGES = 10
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024 // 5MB
@@ -50,21 +50,9 @@ function isValidImage(img: unknown): img is File {
   )
 }
 
-function replaceImageUrlsInMarkdown(
-  markdown: string,
-  originals: string[],
-  uploaded: string[],
-): string {
-  let result = markdown
-  originals.forEach((orig, idx) => {
-    result = result.replaceAll(orig, uploaded[idx])
-  })
-  return result
-}
-
 export async function POST(
   req: NextRequest,
-): Promise<NextResponse<SaveMarkdownResponse>> {
+): Promise<NextResponse<PostResponse>> {
   try {
     const session = await auth()
     if (!session?.user?.id) {
@@ -75,20 +63,19 @@ export async function POST(
     }
 
     const form = await req.formData()
-    const markdown = form.get('markdown')
 
     // 画像とURLの取得・バリデーション
-    const imagesWithUrls = Array.from({ length: MAX_IMAGES }, (_, i) => {
+    const imagesWithUrls = []
+    for (let i = 0; i < MAX_IMAGES; i++) {
       const img = form.get(`images[${i}]`)
       const url = form.get(`imageUrls[${i}]`)
       if (isValidImage(img) && url && typeof url === 'string') {
         if (img.size > MAX_IMAGE_SIZE) {
           throw new Error('画像サイズが大きすぎます（最大5MB）')
         }
-        return { img, url }
+        imagesWithUrls.push({ img, url })
       }
-      return null
-    }).filter((v): v is { img: File; url: string } => v !== null)
+    }
 
     if (imagesWithUrls.length > MAX_IMAGES) {
       return NextResponse.json(
@@ -97,18 +84,26 @@ export async function POST(
       )
     }
 
-    if (typeof markdown !== 'string') {
-      return NextResponse.json(
-        { error: 'フォームデータが不正です。' },
-        { status: 400 },
-      )
-    }
-
     // Cloudflare Images upload
-    let uploadedUrls: string[] = []
+    let uploadedPairs: UploadedImageResult[] = []
     try {
-      uploadedUrls = await Promise.all(
-        imagesWithUrls.map(({ img }) => uploadToCloudflareImages(img)),
+      uploadedPairs = await Promise.all(
+        imagesWithUrls.map(async ({ img, url }) => {
+          const uploadedUrl = await uploadToCloudflareImages(img)
+
+          // 画像IDをURLから抽出（例: Cloudflare ImagesのURLは https://imagedelivery.net/xxxx/yyyy/public の形式）
+          // "imagedelivery.net/xxxx/yyyy/public" の "yyyy" 部分を抽出
+          let cloudflareImageId = ''
+          try {
+            const match = uploadedUrl.match(
+              /imagedelivery\.net\/[^/]+\/([^/]+)/,
+            )
+            cloudflareImageId = match?.[1] ?? ''
+          } catch {
+            cloudflareImageId = ''
+          }
+          return { original: url, uploaded: uploadedUrl, cloudflareImageId }
+        }),
       )
     } catch (_) {
       return NextResponse.json(
@@ -120,14 +115,8 @@ export async function POST(
       )
     }
 
-    // Replace image URLs in markdown
-    const replacedMarkdown = replaceImageUrlsInMarkdown(
-      markdown,
-      imagesWithUrls.map(({ url }) => url),
-      uploadedUrls,
-    )
-
-    return NextResponse.json({ markdown: replacedMarkdown, urls: uploadedUrls })
+    // DB保存やMarkdown置換はここでは行わず、アップロード結果のみ返却
+    return NextResponse.json({ urls: uploadedPairs })
   } catch (e) {
     if (e instanceof Error && e.message.includes('画像サイズが大きすぎます')) {
       return NextResponse.json({ error: e.message }, { status: 400 })

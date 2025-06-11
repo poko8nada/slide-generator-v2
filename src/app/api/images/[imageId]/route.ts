@@ -6,11 +6,7 @@ import { db } from '@/db/schema' // DBインスタンス仮定
 import { images } from '@/db/schema'
 import { auth } from '@/auth'
 
-const CLOUDFLARE_ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID
-if (!CLOUDFLARE_ACCOUNT_ID) {
-  throw new Error('CLOUDFLARE_ACCOUNT_ID environment variable is not set')
-}
-const CLOUDFLARE_IMAGES_URL = `https://imagedelivery.net/${CLOUDFLARE_ACCOUNT_ID}`
+const CLOUDFLARE_IMAGES_URL = `https://imagedelivery.net/${process.env.CLOUDFLARE_ACCOUNT_HASH}`
 
 export async function GET(
   req: NextRequest,

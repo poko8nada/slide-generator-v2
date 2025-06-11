@@ -1,5 +1,8 @@
 import type { SimpleMDEReactProps } from 'react-simplemde-editor'
 
+export type ImageStore = { file: File; tempUrl: string }
+type ImageMapRef = { current: Map<string, ImageStore> }
+
 function getImageUrl(file: File) {
   // Validate file type
   if (!file.type.startsWith('image/')) {
@@ -35,9 +38,13 @@ function imageUploadFunction(
   file: File,
   onSuccess: (url: string) => void,
   onError: (error: string) => void,
+  imageMapRef?: ImageMapRef,
 ) {
   try {
     const imageUrl = getImageUrl(file)
+    if (imageMapRef) {
+      imageMapRef.current.set(imageUrl, { file, tempUrl: imageUrl })
+    }
     onSuccess(imageUrl)
   } catch (error) {
     if (error instanceof Error) {
@@ -52,7 +59,7 @@ export function clearAction(editor: EasyMDE) {
   editor.value('') // Clear the editor content
 }
 
-export function imageUploadAction(editor: EasyMDE) {
+export function imageUploadAction(editor: EasyMDE, imageMapRef?: ImageMapRef) {
   const input = document.createElement('input')
   input.type = 'file'
   input.accept = 'image/*'
@@ -61,6 +68,9 @@ export function imageUploadAction(editor: EasyMDE) {
     if (file) {
       try {
         const imageUrl = getImageUrl(file)
+        if (imageMapRef) {
+          imageMapRef.current.set(imageUrl, { file, tempUrl: imageUrl })
+        }
         editor.codemirror.replaceSelection(`![Image](${imageUrl})`)
 
         // Move the cursor to the end of the inserted text
@@ -82,11 +92,17 @@ export function imageUploadAction(editor: EasyMDE) {
   input.click()
 }
 
-export const options: SimpleMDEReactProps['options'] = {
+export const createOptions = (
+  imageMapRef?: ImageMapRef,
+): SimpleMDEReactProps['options'] => ({
   scrollbarStyle: 'native',
   spellChecker: false,
   uploadImage: true,
-  imageUploadFunction,
+  imageUploadFunction: (
+    file: File,
+    onSuccess: (url: string) => void,
+    onError: (error: string) => void,
+  ) => imageUploadFunction(file, onSuccess, onError, imageMapRef),
   placeholder: 'Type here...',
   toolbar: [
     'bold',
@@ -103,7 +119,7 @@ export const options: SimpleMDEReactProps['options'] = {
     {
       name: 'image-upload',
       action: (editor: EasyMDE) => {
-        imageUploadAction(editor)
+        imageUploadAction(editor, imageMapRef)
       },
       className: 'fa fa-upload',
       title: 'Upload Image',
@@ -120,4 +136,4 @@ export const options: SimpleMDEReactProps['options'] = {
       title: 'Clear',
     },
   ],
-}
+})
