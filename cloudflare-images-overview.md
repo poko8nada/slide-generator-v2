@@ -1,97 +1,256 @@
-# Cloudflare Imagesを活用したNext.js画像管理システム概要
+# 画像アップロード機能実装ガイド
 
-## 1. サービス要件
+## プロジェクト概要
 
-* **ベースシステム:** Next.jsで開発中のWebサービス
-* **コンテンツ:** Markdown形式のスライド
-* **Markdownエディタ:** [easy-markdown-editor](https://github.com/Ionaru/easy-markdown-editor)
-* **スライド生成:** [reveal.js](https://revealjs.com/)
-* **画像挿入方法:** Markdownエディタを通じて、ローカルファイル（Blobなど）または外部URLの画像を埋め込み
-* **画像の保存場所:** Cloudflare Images
+- **構成**: Next.js 15 + Easy Markdown Editor + Reveal.js + AuthJS + Drizzle + Turso + Cloudflare Images
+- **デプロイ**: OpenNext + Cloudflare Workers
+- **目的**: MDエディタでの画像編集時はblob/外部URL表示、MD保存時に画像をアップロードしてURL置換
 
-### 既存の機能と要件
+## 実装方針
 
-* 非ログインユーザーはセッション内でMarkdownを編集し、スライドをPDFとしてダウンロード可能。
-* ログインユーザー向けにMarkdownの保存機能を実装中（現在上限10個）。
-* ログインユーザー向けに画像保存機能を実装中。
-* **重要要件:** Markdownに保存した画像は、ブラウザで直接URLを叩いても表示されないが、Webサービス内で表示される場合は適切に表示されるようにする。
-* **追加要件:** 1つのMarkdownコンテンツに使用できる画像の枚数にも上限を設定する。
+### 基本戦略
+- **パターンA**: フロントエンドで画像収集 → サーバーに一括送信
+- **重複処理**: 初期は無視（後で最適化）
+- **画像削除**: 放置（月1程度でクリーンアップバッチ）
+- **悪用防止**: MDあたりの画像数上限（10-20枚推奨）
 
----
+### セキュリティ対策
+- 直接画像URLアクセスを防ぐため、認証付きAPI経由でのみ画像配信
+- ユーザーあたりの画像数上限設定
+- ファイルサイズ・形式制限
 
-## 2. 主要な機能とデータフロー
+## 実装手順
 
-### 2.1. 画像アップロード・置換プロセス（「保存」ボタン押下時）
+### 1. フロントエンド実装
 
-ユーザーがMarkdownエディタでコンテンツを編集し、「保存」ボタンを押した際に画像処理が実行されます。
+#### 1.1 既存データの活用
+- **編集中**: 既に実装済みのblob化・外部URLプロキシを活用
+- **保存時**: 既存のFile objects/Blobデータを再利用
 
-1.  **クライアントサイド（Markdownエディタ: `easy-markdown-editor`）:**
-    * ユーザーがローカルファイルをドラッグ＆ドロップまたは選択した場合、JavaScriptでその画像を読み込み、**Blob URL** (`URL.createObjectURL()`) を生成します。
-    * このBlob URLを含む仮の画像タグ（例: `![Alt Text](blob:http://localhost/unique-id)`）をMarkdown内に挿入し、リアルタイムプレビュー（`reveal.js`）で表示します。
-    * **重要:** このBlob URLと、それに対応する元の `File` または `Blob` オブジェクトを、クライアントサイドのメモリ（例: `useRef`で保持する `Map<string, File | Blob>`）に一時的に保存しておきます。
-    * ユーザーが外部URLをペーストした場合、元の外部URL（例: `![Alt Text](https://example.com/external.jpg)`）をそのままMarkdown内に挿入し、リアルタイムプレビューで表示します。
-    * この時点では、Markdown内の画像URLはまだ**仮のURL**（Blob URLまたは外部URL）です。
+#### 1.2 MD保存処理
+1. MD内の画像URL抽出（正規表現）
+2. 画像数上限チェック
+3. 各URLに対応するFile/Blobオブジェクトを特定
+4. FormDataに画像データとメタデータを格納
+5. サーバーに一括送信
 
-2.  **クライアントサイド（「保存」ボタン押下時）:**
-    * 現在のMarkdownコンテンツを取得し、`remark`などのライブラリを用いて、Cloudflare ImagesのURLではない画像URL（`blob:`で始まるもの、または `http(s):`で始まるもの）を検出します。
-    * 検出した各画像URLについて、**Next.jsのAPI Route (`/api/images/upload`) を非同期で呼び出し、画像をアップロード/インポートします。**
-        * **Blob URLの場合:** 一時保存していた対応する `File` / `Blob` オブジェクトを `multipart/form-data` としてAPI Routeに送信します。
-        * **外部URLの場合:** そのURLをJSON形式でAPI Routeに送信します。
-    * API Routeからのレスポンスで、Cloudflare Imagesから発行された**署名なしのURL**（例: `https://imagedelivery.net/ACCOUNT_HASH/IMAGE_ID/public`）を受け取ります。
-    * 元のMarkdown内の仮の画像URL（Blob URLや外部URL）を、この新しい**署名なしのCloudflare Images URL**に置換します。
-    * **すべての画像URLの置換が完了したら、** その最終的なMarkdownコンテンツを、データベース保存用の別のNext.js API Route（例: `/api/slides/save`）に送信します。
+#### 1.3 FormData構造
+```
+FormData {
+  "markdown": MDテキスト全体
+  "images[0]": File/Blob object
+  "images[1]": File/Blob object
+  "imageUrls[0]": 元のURL（置換用）
+  "imageUrls[1]": 元のURL（置換用）
+  "documentId": ドキュメントID
+}
+```
 
-3.  **サーバーサイド（`/api/images/upload` API Route）での処理:**
-    * クライアントから送信された画像データ（`File`/`Blob`）または外部URLを受け取ります。
-    * **認証チェック:** リクエストを送信しているユーザーが**ログインしており、画像アップロードの権限を持っているか**を厳しくチェックします。
-    * Cloudflare Images APIを呼び出し、画像をアップロード/インポートします。この際、**`requireSignedURLs: true`** オプションを設定し、アップロードされる画像が署名なしではアクセスできないようにします。
-    * アップロードが成功すると、Cloudflare Imagesから返される**署名なしのURL**をクライアントに返します。
+### 2. サーバーサイド実装
 
-### 2.2. Markdownコンテンツの表示プロセス
+#### 2.1 API Route (`/api/documents/save`)
+1. FormData受信・バリデーション
+2. 画像数・サイズ制限チェック
+3. 認証・権限確認
+4. 画像アップロード処理
+5. URL置換・MD保存
 
-ユーザーが保存されたスライドを閲覧する際に、画像が正しく表示されるように処理されます。
+#### 2.2 画像アップロード処理
+1. `images[0]`, `images[1]`...を順番にCloudflare Imagesにアップロード
+2. アップロード成功したURLを記録
+3. MD内の`imageUrls[0]`, `imageUrls[1]`...を新URLで置換
+4. 置換済みMDをDBに保存
 
-1.  **サーバーサイド（Next.jsのデータフェッチ: `getServerSideProps` / Server Components）:**
-    * データベースから、**署名なしのCloudflare Images URLを含むMarkdownコンテンツ**を読み込みます。
-    * `remark`などのライブラリでMarkdownをパースし、含まれている署名なしのCloudflare Images URLを検出します。
-    * 検出した各URLに対し、Cloudflare Imagesの**署名用秘密鍵**（サーバーサイドでのみアクセス可能）を使用して、**その時点での新しい有効期限を持つ署名付きURL**を生成します。
-    * 有効期限は、アプリケーションの要件（例: 数分から数時間程度）に応じて設定します。
-    * 生成された署名付きURLでMarkdown内の対応するURLを置換し、最終的なMarkdownコンテンツ（またはそれをHTMLに変換したもの）をクライアントサイドに送信します。
+#### 2.3 画像アクセス制御
+- API Route (`/api/images/[imageId]`) で認証チェック
+- ユーザーの画像アクセス権限確認
+- Cloudflare Imagesから画像取得・レスポンス
 
-2.  **クライアントサイド（ブラウザ / `reveal.js`）:**
-    * ブラウザは、サーバーから受け取ったHTML（またはMarkdownから変換されたHTML）をレンダリングし、`reveal.js`がスライドを表示します。
-    * HTML内の`<img>`タグの`src`属性には、有効な署名付きURLが設定されているため、ブラウザはそのURLをリクエストし、Cloudflare Imagesから画像を読み込んで表示します。
+#### 2.4 URL置換の仕様
+**置換前（編集中）:**
+```markdown
+![スクリーンショット](blob:http://localhost:3000/12345-abcde)
+![外部画像](https://example.com/image.jpg)
+```
 
----
+**置換後（保存後）:**
+```markdown
+![スクリーンショット](/api/images/cf-img-001)
+![外部画像](/api/images/cf-img-002)
+```
 
-## 3. セキュリティとコスト管理に関する対策
+**アクセスフロー:**
+1. ブラウザが `/api/images/cf-img-001` にリクエスト
+2. API Routeで認証チェック
+3. 権限OKなら Cloudflare Images から画像取得
+4. 画像データをレスポンス
 
-1.  **認証・認可 (最重要):**
-    * **画像アップロード時:** Next.js API Route (`/api/images/upload`) にて、リクエストユーザーが**ログイン済みかつアップロード権限があるか**を厳格にチェックします。
-    * **Markdown保存時:** データベース保存用のAPI Route (`/api/slides/save`) にて、リクエストユーザーが**ログイン済みかつ保存権限があるか**を厳格にチェックします。
-    * **APIトークンと秘密鍵の管理:** Cloudflare APIトークンと署名用秘密鍵は、必要最小限の権限を与え、**絶対にクライアントサイドに公開せず**、サーバーサイドの環境変数として安全に管理します。
+**プレビューURL（期間限定トークン付き）:**
+```markdown
+![画像](/api/images/cf-img-001?token=preview-12345)
+```
 
-2.  **署名付きURL (Signed URLs):**
-    * すべての画像を `requireSignedURLs: true` としてアップロードすることで、**署名なしのURLをブラウザで直接叩いても画像は表示されません**（通常はHTTP 403 Forbidden）。
-    * 画像表示時には、サーバーサイドで**有効期限付きの署名付きURL**を生成して利用します。これにより、
-        * URLが外部に流出しても、**有効期限が切れると無効になります**。
-        * 他のサイトからの直接リンク（ホットリンク）を防止できます。
-        * ページをリロードするたびに新しい署名付きURLが発行されるため、古いURLがいつまでも使われ続けることはありません。
+### 3. データベース設計
 
-3.  **コンテンツフィルタリングとリソース制限:**
-    * **ファイルタイプ制限:** アップロードを許可する画像ファイルのタイプ（JPEG, PNG, WebPなど）をAPI Routeで厳しく制限します。
-    * **ファイルサイズ制限:** Cloudflare Imagesの制限に加え、API Routeで独自のファイルサイズ上限を設定します。
-    * **Markdownあたりの画像枚数制限:** 1つのMarkdownコンテンツに含めることができる画像の最大枚数を、サーバーサイド（Markdown保存用API Route）で設定・チェックし、上限を超えた場合は拒否します。これは、コスト管理、パフォーマンス維持、および悪用防止に非常に有効です。
-    * **ユーザーごとのMarkdown保存上限:** 既存のユーザーあたりのMarkdown保存上限（10個）と組み合わせることで、リソースの悪用をより効果的に防ぎます。
+#### 3.1 画像管理テーブル（Turso + Drizzle）
 
----
+**スキーマ定義:**
+```typescript
+// schema.ts
+export const images = sqliteTable('images', {
+  id: text('id').primaryKey(),
+  cloudflareImageId: text('cloudflare_image_id').notNull(),
+  userId: text('user_id').notNull(),
+  documentId: text('document_id').notNull(),
+  originalFilename: text('original_filename'),
+  fileSize: integer('file_size'),
+  contentType: text('content_type'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`)
+});
 
-## 4. 実装の補足事項
+// インデックス
+export const userIdIndex = index('idx_images_user_id').on(images.userId);
+export const documentIdIndex = index('idx_images_document_id').on(images.documentId);
+```
 
-* **Markdownパーサー:** `remark` (unifiedjs) ライブラリは、Markdownの解析とAST（Abstract Syntax Tree）操作に非常に強力で推奨されます。
-* **HTTPクライアント:** Next.js API RouteからCloudflare Images APIを呼び出す際に、`axios`や標準の`fetch`を利用できます。
-* **`multipart/form-data`の処理:** Next.js API Routeでファイルアップロード（`multipart/form-data`）を処理する場合、`formidable`のようなサーバーサイドライブラリの利用が便利です。
-* **ユーザー体験 (UX):**
-    * 「保存」ボタン押下時に、画像のアップロードおよびMarkdown保存が完了するまで時間がかかる可能性があるため、ユーザーに処理中であることを示すローディング表示を行うことが必須です。
-    * エラー発生時には、具体的なメッセージ（例: 「画像枚数が上限を超えています」）をユーザーに伝えます。
-    * 編集中のリアルタイムプレビューでは、Blob URLを利用することで、アップロード前の画像をスムーズに表示できます。
+**クエリ例:**
+```typescript
+// ユーザーの画像数チェック
+const userImageCount = await db
+  .select({ count: count() })
+  .from(images)
+  .where(eq(images.userId, userId));
+
+// ドキュメントの画像数チェック  
+const docImageCount = await db
+  .select({ count: count() })
+  .from(images)
+  .where(eq(images.documentId, documentId));
+```
+
+#### 3.2 テーブル更新タイミング
+
+**基本的な更新タイミング:**
+- **MD保存時**: 画像アップロード成功後に即座にINSERT
+- **MD更新時**: 新しい画像のみINSERT、削除された画像はそのまま残す
+
+**トランザクション管理:**
+```typescript
+// 推奨処理順序
+await db.transaction(async (tx) => {
+  // 1. 画像アップロード
+  const uploadResults = await uploadImages(imageFiles);
+  
+  // 2. テーブルINSERT
+  await tx.insert(images).values(uploadResults.map(result => ({
+    id: generateId(),
+    cloudflareImageId: result.id,
+    userId,
+    documentId,
+    // その他のフィールド
+  })));
+  
+  // 3. MD保存
+  await tx.update(documents).set({ content: replacedMarkdown }).where(eq(documents.id, documentId));
+});
+```
+
+**部分失敗時の対応:**
+- アップロード済み画像が孤立した場合 → 定期クリーンアップで回収
+- 削除処理は即座に行わず、月1回のバッチ処理で未使用画像を一括削除
+
+## 注意点・考慮事項
+
+### 開発時の注意点
+1. **配列順序の維持**: FormDataの画像とURLの対応関係
+2. **部分失敗ハンドリング**: 一部画像のアップロードが失敗した場合の処理
+3. **プログレス表示**: UX向上のため進捗表示を検討
+4. **エラーメッセージ**: ユーザーにわかりやすいエラー通知
+
+### パフォーマンス考慮
+- 大量画像時のアップロード時間
+- 並列アップロード vs 順次アップロード
+- ネットワーク帯域の消費量
+- サーバーサイドの処理タイムアウト
+
+### セキュリティ考慮
+- ファイル形式の厳格なチェック
+- ファイルサイズ制限の徹底
+- 画像メタデータの除去
+- CSRF対策
+
+## 将来的な改善・最適化
+
+### Phase 2: 効率化
+
+#### 重複検知機能
+- **検知方法**: SHA-256ハッシュでファイル内容を比較
+- **テーブル拡張**: `file_hash` カラム追加
+- **実装**: アップロード前に既存ハッシュをチェック、存在すれば既存画像URLを使い回し
+- **権限考慮**: 同一ユーザー内のみ vs 全体での重複検知を選択
+
+#### 画像削除の改善
+**即座削除型:**
+- 参照カウンタで管理
+- 最後の参照削除時に即座削除
+- ストレージ効率は良いが実装複雑
+
+**GC型（推奨）:**
+- 週1回：全MDスキャンで使用中画像をマーク
+- 30日間未使用画像を自動削除
+- 猶予期間があり安全
+
+#### その他効率化
+- **画像圧縮**: アップロード前の自動圧縮
+- **プログレッシブアップロード**: 大きな画像の段階的アップロード
+
+### Phase 3: 高度な機能
+- **画像編集**: 基本的なクロップ・リサイズ機能
+- **CDN最適化**: 地域別配信の最適化
+- **画像分析**: AI による自動alt text生成
+- **バージョン管理**: 画像の履歴管理
+
+### Phase 4: 運用改善
+- **自動クリーンアップ**: 未使用画像の定期削除
+- **コスト最適化**: ストレージ使用量の監視・最適化
+- **パフォーマンス監視**: 画像配信の速度監視
+- **ユーザー分析**: 画像使用パターンの分析
+
+## 運用・保守
+
+### 定期メンテナンス
+- **月1回**: 未使用画像のクリーンアップ
+- **週1回**: ストレージ使用量の確認
+- **日次**: エラーログの確認
+
+### 監視項目
+- 画像アップロード成功率
+- 平均アップロード時間
+- ストレージ使用量
+- 帯域使用量
+- エラー発生率
+
+### バックアップ・災害対策
+- 重要な画像データのバックアップ戦略
+- Cloudflare Images の可用性監視
+- 代替画像配信の準備
+
+## 実装優先度
+
+### 最優先 (MVP)
+1. 基本的な画像アップロード機能
+2. 画像数制限
+3. 認証付き画像配信
+4. エラーハンドリング
+
+### 中優先
+1. プログレス表示
+2. 画像プレビュー改善
+3. ファイルサイズ最適化
+4. 基本的なクリーンアップ
+
+### 低優先 (将来実装)
+1. 重複検知
+2. 高度な画像編集
+3. AI機能
+4. 詳細な分析機能
