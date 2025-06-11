@@ -62,7 +62,8 @@ function updateActiveSlide(
   const cursor = cm.getCursor()
   const textBeforeCursor = mdDataBody.slice(0, cm.indexFromPos(cursor))
   // スライドの区切り(3本のハイフンのみを対象)
-  const slideBreaks = textBeforeCursor.split(/(?<=\n|^)---(?=\n|$)/).length - 1
+  const slideBreaks =
+    textBeforeCursor.split(/(?<=\r?\n|^)---(?=\r?\n|$)/).length - 1
   const slideIndex = Math.max(0, slideBreaks)
   setActiveSlideIndex(slideIndex)
 }

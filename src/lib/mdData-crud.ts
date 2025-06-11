@@ -46,7 +46,7 @@ export async function createMdDataTitleByBody(body: string): Promise<string> {
   const trimmedBody = body.trim()
   if (!trimmedBody) return 'Untitled'
 
-  const firstMdData = trimmedBody.split(/(?<=\n|^)---(?=\n|$)/)[0]
+  const firstMdData = trimmedBody.split(/(?<=\r?\n|^)---(?=\r?\n|$)/)[0]
   const cleanText = firstMdData
     .replace(/^#+\s*/, '')
     .replace(/\*\*(.*?)\*\*/g, '$1')

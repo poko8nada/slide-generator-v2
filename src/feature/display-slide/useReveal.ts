@@ -5,7 +5,9 @@ import type Reveal from 'reveal.js'
 
 function getSlides(md: string): Promise<string[]> {
   // Markdownをスライドに分割 (3本のハイフンのみを対象)
-  const slides = md.split(/(?<=\n|^)---(?=\n|$)/).map(content => content.trim())
+  const slides = md
+    .split(/(?<=\r?\n|^)---(?=\r?\n|$)/)
+    .map(content => content.trim())
 
   // スライドをHTMLに変換
   const htmlSlides = Promise.all(
