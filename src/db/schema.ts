@@ -124,3 +124,19 @@ export const authenticators = sqliteTable(
     }),
   ],
 )
+export const images = sqliteTable('images', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  cloudflareImageId: text('cloudflareImageId').notNull(),
+  userId: text('userId')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  documentId: text('documentId')
+    .notNull()
+    .references(() => mdDatas.id, { onDelete: 'cascade' }),
+  originalFilename: text('originalFilename').notNull(),
+  fileSize: integer('fileSize').notNull(),
+  contentType: text('contentType').notNull(),
+  createdAt: integer('createdAt', { mode: 'timestamp_ms' }).notNull(),
+})

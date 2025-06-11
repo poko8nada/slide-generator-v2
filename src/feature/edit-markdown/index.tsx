@@ -12,7 +12,8 @@ import type { Session } from 'next-auth'
 import { toastError, toastSuccess } from '@/components/custom-toast'
 import CustomSubmitButton from '@/components/custom-submit-button'
 import Form from 'next/form'
-import handleCreateNewMdData from './handle-update-mdData'
+import handleUpdateMdData from './handle-update-mdData'
+import type { SaveMarkdownResponse } from '@/lib/type'
 
 export default function EditMarkdown({
   allMdDatas,
@@ -47,16 +48,42 @@ export default function EditMarkdown({
       {initialMdData && (
         <Form
           action={async () => {
-            const result = await handleCreateNewMdData(
-              mdData.id,
-              mdData.body,
-              session,
-            )
-            if (result.status === 'error') {
-              toastError(result.message)
+            try {
+              // FormData生成
+              const formData = new FormData()
+              formData.append('markdown', mdData.body)
+              // 画像データ追加（既存ロジックがあればここで追加）
+
+              // APIへ送信
+              const res = await fetch('/api/documents/save', {
+                method: 'POST',
+                body: formData,
+              })
+
+              if (!res.ok) {
+                throw new Error('画像アップロードAPI通信エラー')
+              }
+
+              const data: SaveMarkdownResponse = await res.json()
+              if ('error' in data) {
+                throw new Error(data.error || '置換済みMarkdown取得失敗')
+              }
+              const replacedMd = data.markdown
+
+              const result = await handleUpdateMdData(
+                mdData.id,
+                replacedMd,
+                session,
+              )
+              if (result.status === 'error') {
+                toastError(result.message)
+                return
+              }
+              markAsSaved()
+              toastSuccess(result.message)
+            } catch (e) {
+              toastError(e instanceof Error ? e.message : '保存に失敗しました')
             }
-            markAsSaved()
-            toastSuccess(result.message)
           }}
         >
           <CustomSubmitButton

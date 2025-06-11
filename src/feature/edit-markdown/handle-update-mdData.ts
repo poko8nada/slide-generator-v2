@@ -7,11 +7,11 @@ import type { ServerResponseResult } from '@/lib/type'
 
 export default async function handleCreateNewMdData(
   id: string,
-  body: string,
+  replacedMd: string,
   session: Session | null,
 ): Promise<ServerResponseResult> {
   try {
-    await updateMdData(id, body, session)
+    await updateMdData(id, replacedMd, session)
     revalidateTag('mdDatas')
     return {
       status: 'success',
