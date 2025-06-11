@@ -1,5 +1,5 @@
 // src/app/api/images/[imageId]/route.ts
-import { type NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { eq } from 'drizzle-orm'
 import { db } from '@/db/schema' // DBインスタンス仮定
 // imagesテーブル定義はcloudflare-images-overview.md準拠で仮定
@@ -9,10 +9,13 @@ import { auth } from '@/auth'
 const CLOUDFLARE_IMAGES_URL = `https://imagedelivery.net/${process.env.CLOUDFLARE_ACCOUNT_HASH}`
 
 export async function GET(
-  req: NextRequest,
-  { params }: { params: { imageId: string } },
+  _request: Request,
+  { params }: { params: Promise<{ imageId: string }> },
 ) {
   try {
+    // paramsからimageIdを取得（awaitが必要）
+    const { imageId } = await params
+
     // 認証
     const session = await auth()
     if (!session?.user?.id) {
@@ -27,7 +30,7 @@ export async function GET(
     const image = await db
       .select()
       .from(images)
-      .where(eq(images.id, params.imageId))
+      .where(eq(images.cloudflareImageId, imageId))
       .then(rows => rows[0])
 
     if (!image) {
@@ -36,18 +39,28 @@ export async function GET(
         { status: 404 },
       )
     }
+
     if (image.userId !== userId) {
       return NextResponse.json({ error: '権限がありません。' }, { status: 403 })
     }
 
     // Cloudflare Imagesから画像取得
-    const cfRes = await fetch(
-      `${CLOUDFLARE_IMAGES_URL}/${image.cloudflareImageId}/public`,
-      { method: 'GET' },
-    )
+    const cfUrl = `${CLOUDFLARE_IMAGES_URL}/${image.cloudflareImageId}/public`
+
+    const cfRes = await fetch(cfUrl, {
+      method: 'GET',
+    })
+
     if (!cfRes.ok) {
+      console.error(
+        'Cloudflare Images fetch failed:',
+        cfRes.status,
+        cfRes.statusText,
+      )
       return NextResponse.json(
-        { error: 'Cloudflare Imagesから画像取得に失敗しました。' },
+        {
+          error: `Cloudflare Imagesから画像取得に失敗しました。Status: ${cfRes.status}`,
+        },
         { status: 502 },
       )
     }
@@ -55,6 +68,7 @@ export async function GET(
     // 画像データをそのままレスポンス
     const contentType = cfRes.headers.get('content-type') ?? 'image/jpeg'
     const arrayBuffer = await cfRes.arrayBuffer()
+
     return new NextResponse(Buffer.from(arrayBuffer), {
       status: 200,
       headers: {
@@ -62,9 +76,13 @@ export async function GET(
         'Cache-Control': 'public, max-age=31536000',
       },
     })
-  } catch (e) {
+  } catch (error) {
+    console.error('API Error in /api/images/[imageId]:', error)
     return NextResponse.json(
-      { error: 'サーバー内部でエラーが発生しました。' },
+      {
+        error: 'サーバー内部でエラーが発生しました。',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
       { status: 500 },
     )
   }
