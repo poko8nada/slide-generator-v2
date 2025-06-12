@@ -6,11 +6,14 @@ import DisplaySheet from '@/feature/display-sheet'
 import DisplayMdDataItemOnSheet from '@/feature/display-mdDataItem-onSheet'
 import { type MdData, getMdDatas } from '@/lib/mdData-crud'
 import { getMdDataCountAction } from './getMdDataCountAction'
+import DisplayImageOnSheet from '@/feature/display-image-onSheet'
+import { getCloudFlareImageIds } from '@/lib/image-crud'
 
 export default async function Page() {
   const session = await auth()
   const mdDatas: MdData[] = await getMdDatas(session)
   const mdDataCount = await getMdDataCountAction(session)
+  const cloudFlareImageIds = await getCloudFlareImageIds(session)
 
   return (
     <>
@@ -18,7 +21,10 @@ export default async function Page() {
         <div className='flex items-center gap-2'>
           {session && (
             <DisplaySheet session={session} mdDataCount={mdDataCount}>
-              <DisplayMdDataItemOnSheet mdDatas={mdDatas} session={session} />
+              <div className='overflow-y-scroll'>
+                <DisplayMdDataItemOnSheet mdDatas={mdDatas} session={session} />
+                <DisplayImageOnSheet cloudFlareImageIds={cloudFlareImageIds} />
+              </div>
             </DisplaySheet>
           )}
           <HeaderLogo />

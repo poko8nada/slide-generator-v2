@@ -1,5 +1,7 @@
 'use server'
 import { db, images } from '@/db/schema'
+import { eq } from 'drizzle-orm'
+import type { Session } from 'next-auth'
 
 export type ImageUpsertInput = {
   cloudflareImageId: string
@@ -38,4 +40,17 @@ export async function upsertImageToDB(input: ImageUpsertInput) {
         createdAt: new Date(),
       },
     })
+}
+
+export async function getCloudFlareImageIds(session: Session | null) {
+  if (!session?.user?.id) {
+    return []
+  }
+
+  return await db
+    .select({
+      cloudflareImageId: images.cloudflareImageId,
+    })
+    .from(images)
+    .where(eq(images.userId, session.user.id))
 }
