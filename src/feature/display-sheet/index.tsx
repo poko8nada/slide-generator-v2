@@ -38,7 +38,7 @@ export default function DisplaySheet({
       >
         <Menu />
       </SheetTrigger>
-      <SheetContent side='left'>
+      <SheetContent side='left' className='max-h-full'>
         <SheetHeader>
           <SheetTitle className='sr-only'>MarkDown</SheetTitle>
           <div className='flex gap-3'>

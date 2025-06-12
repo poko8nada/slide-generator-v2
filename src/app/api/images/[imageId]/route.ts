@@ -1,8 +1,7 @@
 // src/app/api/images/[imageId]/route.ts
 import { NextResponse } from 'next/server'
 import { eq } from 'drizzle-orm'
-import { db } from '@/db/schema' // DBインスタンス仮定
-// imagesテーブル定義はcloudflare-images-overview.md準拠で仮定
+import { db } from '@/db/schema'
 import { images } from '@/db/schema'
 import { auth } from '@/auth'
 

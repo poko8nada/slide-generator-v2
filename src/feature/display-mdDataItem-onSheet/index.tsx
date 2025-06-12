@@ -11,7 +11,7 @@ import { useMdData } from '@/providers/md-data-provider'
 import { cn } from '@/lib/utils'
 import { Trash2 } from 'lucide-react'
 
-export default function DisplaySlideItemOnSheet({
+export default function DisplayMdDataItemOnSheet({
   mdDatas,
   session,
 }: {
@@ -20,7 +20,7 @@ export default function DisplaySlideItemOnSheet({
 }) {
   const { mdData } = useMdData()
   return (
-    <div className='mt-4 overflow-y-auto'>
+    <div className='mt-4 overflow-y-scroll h-6/12'>
       <div className='grid grid-cols-2 gap-x-4 px-4 py-2 font-semibold text-sm text-gray-500 sticky top-0 bg-white z-10'>
         <span>ファイル名</span>
         <span className='text-right'>最終更新日</span>
