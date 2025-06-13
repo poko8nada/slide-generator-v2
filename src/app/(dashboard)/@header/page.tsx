@@ -32,7 +32,7 @@ export default async function Page() {
               </div>
             </DisplaySheet>
           )}
-          <HeaderLogo />
+          <HeaderLogo isPro={mdDataCount.isPro} />
         </div>
         <ControlUserAction session={session} />
       </GeneralHeader>

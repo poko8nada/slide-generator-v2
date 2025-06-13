@@ -18,7 +18,6 @@ import { useState } from 'react'
 import handleCreateNewMdData from './handle-create-new-mdData'
 import { useMdData } from '@/providers/md-data-provider'
 import { toastSuccess, toastError } from '@/components/custom-toast'
-import UserLevel from '@/components/userLevel'
 
 type MdDataCount = { current: number; limit: number; isPro: boolean }
 
@@ -61,7 +60,6 @@ export default function DisplaySheet({
                 new md file
               </CustomSubmitButton>
             </Form>
-            <UserLevel isPro={mdDataCount.isPro} />
           </div>
         </SheetHeader>
         {children}
