@@ -25,7 +25,7 @@ export default function DisplayMdDataItemOnSheet({
 }) {
   const { mdData } = useMdData()
   return (
-    <div className='mt-4 overflow-y-scroll h-6/12'>
+    <div className='mt-4 overflow-y-scroll h-5/12'>
       <SheetContentHeader title='Slides' current={current} limit={limit} />
       <div className='mt-[-15px]'>
         {mdDatas.map(item => {
@@ -33,7 +33,7 @@ export default function DisplayMdDataItemOnSheet({
             <div
               key={item.id}
               className={cn(
-                'group hover:bg-gray-100 transition flex justify-between w-full items-center gap-1 border-b  cursor-pointer pl-4 pr-1 py-2',
+                'group bg-gray-50 hover:bg-gray-100 transition flex justify-between w-full items-center gap-1 border-b  cursor-pointer pl-4 pr-1 py-2',
                 mdData?.id === item.id && 'bg-gray-200',
               )}
             >
