@@ -22,7 +22,12 @@ export default async function Page() {
           {session && (
             <DisplaySheet session={session} mdDataCount={mdDataCount}>
               <div className='overflow-y-scroll'>
-                <DisplayMdDataItemOnSheet mdDatas={mdDatas} session={session} />
+                <DisplayMdDataItemOnSheet
+                  mdDatas={mdDatas}
+                  session={session}
+                  current={mdDataCount.current}
+                  limit={mdDataCount.limit}
+                />
                 <DisplayImageOnSheet cloudFlareImageIds={cloudFlareImageIds} />
               </div>
             </DisplaySheet>

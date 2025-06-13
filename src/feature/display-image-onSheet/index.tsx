@@ -14,7 +14,7 @@ export default function DisplayImageOnSheet({
 
   const handleCopy = (src: string, id: string) => {
     if (navigator.clipboard) {
-      navigator.clipboard.writeText(src)
+      navigator.clipboard.writeText(`![alt](${src})`)
       setCopiedId(id)
       setTimeout(() => setCopiedId(null), 1200)
     }
