@@ -1,2 +1,0 @@
-CREATE UNIQUE INDEX `images_cloudflare_user_doc_unique` ON `images` (`cloudflareImageId`,`userId`,`documentId`);
-CREATE UNIQUE INDEX `images_cloudflare_user_unique` ON `images` (`cloudflareImageId`,`userId`);
