@@ -2,6 +2,7 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import type { PostResponse, UploadedImageResult } from '@/lib/type'
+import { findImageByHash, upsertImageToDB } from '@/lib/image-crud'
 
 const MAX_IMAGES = 10
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024 // 5MB
@@ -50,12 +51,21 @@ function isValidImage(img: unknown): img is File {
   )
 }
 
+// Edgeランタイム対応SHA-256ハッシュ生成
+async function generateHashFromFile(file: File): Promise<string> {
+  const arrayBuffer = await file.arrayBuffer()
+  const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer)
+  const hashArray = Array.from(new Uint8Array(hashBuffer))
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+}
+
 export async function POST(
   req: NextRequest,
 ): Promise<NextResponse<PostResponse>> {
   try {
     const session = await auth()
-    if (!session?.user?.id) {
+    const userId = session?.user?.id
+    if (!userId) {
       return NextResponse.json(
         { error: '認証に失敗しました。再度ログインしてください。' },
         { status: 401 },
@@ -89,10 +99,22 @@ export async function POST(
     try {
       uploadedPairs = await Promise.all(
         imagesWithUrls.map(async ({ img, url }) => {
+          // 1. ハッシュ生成
+          const hash = await generateHashFromFile(img)
+          // 2. 重複チェック
+          const found = await findImageByHash(hash)
+          if (found?.cloudflareImageId) {
+            // 既存画像
+            const uploadedUrl = `https://imagedelivery.net/${process.env.CLOUDFLARE_ACCOUNT_ID}/${found.cloudflareImageId}/public`
+            return {
+              original: url,
+              uploaded: uploadedUrl,
+              cloudflareImageId: found.cloudflareImageId,
+              hash,
+            }
+          }
+          // 3. 新規アップロード
           const uploadedUrl = await uploadToCloudflareImages(img)
-
-          // 画像IDをURLから抽出（例: Cloudflare ImagesのURLは https://imagedelivery.net/xxxx/yyyy/public の形式）
-          // "imagedelivery.net/xxxx/yyyy/public" の "yyyy" 部分を抽出
           let cloudflareImageId = ''
           try {
             const match = uploadedUrl.match(
@@ -102,7 +124,21 @@ export async function POST(
           } catch {
             cloudflareImageId = ''
           }
-          return { original: url, uploaded: uploadedUrl, cloudflareImageId }
+          // DB upsert（hash保存）
+          await upsertImageToDB({
+            cloudflareImageId,
+            userId,
+            originalFilename: img.name,
+            fileSize: img.size,
+            contentType: img.type,
+            hash,
+          })
+          return {
+            original: url,
+            uploaded: uploadedUrl,
+            cloudflareImageId,
+            hash,
+          }
         }),
       )
     } catch (_) {
