@@ -13,7 +13,6 @@ export type UploadedImageResult = {
   original: string
   uploaded: string
   cloudflareImageId: string
-  hash?: string
 }
 
 export type PostResponse = { urls: UploadedImageResult[] } | { error: string }
