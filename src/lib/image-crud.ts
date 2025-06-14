@@ -11,10 +11,6 @@ export type ImageUpsertInput = {
   contentType?: string
 }
 
-/**
- * Cloudflare画像ID・ユーザーIDでupsert（存在すればupdate、なければinsert）
- * unique制約: images_cloudflare_user_unique
- */
 export async function upsertImageToDB(input: ImageUpsertInput) {
   if (!input.cloudflareImageId || !input.userId) {
     throw new Error('cloudflareImageIdとuserIdは必須です')

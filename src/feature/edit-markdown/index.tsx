@@ -14,7 +14,10 @@ import { toastError, toastSuccess } from '@/components/custom-toast'
 import CustomSubmitButton from '@/components/custom-submit-button'
 import Form from 'next/form'
 import handleUpdateMdData from './handle-update-mdData'
-import { fetchAndRegisterExternalImages } from './fetchAndRegisterExternalImages'
+import {
+  fetchAndRegisterExternalImages,
+  removeCloudflareImageUrls,
+} from './control-images'
 import { handleUpsertImagesToDB } from './handle-upsert-images-to-DB'
 import type { UploadedImageResult } from '@/lib/type'
 
@@ -58,10 +61,15 @@ export default function EditMarkdown({
         <Form
           action={async () => {
             try {
+              // 特定の画像URLを取り除く
+              const mdWithoutImages = await removeCloudflareImageUrls(
+                mdData.body,
+              )
+
               // blobは先にimageMapに登録済み
               // 外部画像fetch→File化→imageMap登録
               await fetchAndRegisterExternalImages(
-                mdData.body,
+                mdWithoutImages,
                 imageMapRef.current,
               )
               console.log('[EditMarkdown] imageMapRef.current', imageMapRef)

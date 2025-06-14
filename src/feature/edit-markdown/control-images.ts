@@ -1,7 +1,14 @@
 import type { ImageStore } from './markdownAction'
 
+// /api/images/...ではじまる画像URLを取り除く
+export async function removeCloudflareImageUrls(
+  markdown: string,
+): Promise<string> {
+  return markdown.replace(/!\[.*?\]\((\/api\/images\/[^\s)]+)\)/g, '')
+}
+
 // 外部画像URL抽出関数
-export function extractExternalImageUrls(markdown: string): string[] {
+function extractExternalImageUrls(markdown: string): string[] {
   const urlRegex = /!\[.*?\]\((https?:\/\/[^\s)]+)\)/g
   const matches = [...markdown.matchAll(urlRegex)]
   return matches.map(match => match[1])
