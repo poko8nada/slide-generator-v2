@@ -13,6 +13,7 @@ export async function handleUpsertImagesToDB(
     original: string
     uploaded: string
     cloudflareImageId: string
+    hash?: string
   }[],
   session: Session | null,
   metaMap?: Map<
@@ -30,6 +31,7 @@ export async function handleUpsertImagesToDB(
       originalFilename: meta.originalFilename,
       fileSize: meta.fileSize,
       contentType: meta.contentType,
+      hash: pair.hash,
     }
     await upsertImageToDB(input)
   }

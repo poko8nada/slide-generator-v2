@@ -142,6 +142,7 @@ export const images = sqliteTable(
       .references(() => users.id, { onDelete: 'cascade' }),
     originalFilename: text('originalFilename').notNull(),
     fileSize: integer('fileSize').notNull(),
+    hash: text('hash').unique(),
     contentType: text('contentType').notNull(),
     createdAt: integer('createdAt', { mode: 'timestamp_ms' }).notNull(),
   },
