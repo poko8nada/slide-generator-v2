@@ -6,14 +6,14 @@ import type { Session } from 'next-auth'
 export type ImageUpsertInput = {
   cloudflareImageId: string
   userId: string
-  documentId?: string
   originalFilename?: string
   fileSize?: number
   contentType?: string
 }
 
 /**
- * Cloudflare画像ID・ユーザーID・ドキュメントIDでupsert（存在すればupdate、なければinsert）
+ * Cloudflare画像ID・ユーザーIDでupsert（存在すればupdate、なければinsert）
+ * unique制約: images_cloudflare_user_unique
  */
 export async function upsertImageToDB(input: ImageUpsertInput) {
   if (!input.cloudflareImageId || !input.userId) {
@@ -25,14 +25,13 @@ export async function upsertImageToDB(input: ImageUpsertInput) {
     .values({
       cloudflareImageId: input.cloudflareImageId,
       userId: input.userId,
-      documentId: input.documentId ?? '',
       originalFilename: input.originalFilename ?? '',
       fileSize: input.fileSize ?? 0,
       contentType: input.contentType ?? '',
       createdAt: new Date(),
     })
     .onConflictDoUpdate({
-      target: [images.cloudflareImageId, images.userId, images.documentId],
+      target: [images.cloudflareImageId, images.userId],
       set: {
         originalFilename: input.originalFilename ?? '',
         fileSize: input.fileSize ?? 0,

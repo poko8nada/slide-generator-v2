@@ -93,7 +93,7 @@ export default function EditMarkdown({
               console.log('[EditMarkdown] data', data)
 
               // 画像情報をDBにupsert
-              await handleUpsertImagesToDB(data.urls, session, mdData.id)
+              await handleUpsertImagesToDB(data.urls, session)
 
               // Markdown本文の画像URLをアップロード後のURLで置換
               let replacedMd = mdData.body

@@ -6,7 +6,6 @@ import type { Session } from 'next-auth'
  * Cloudflareアップロード後の画像ペア配列をDBにupsertする
  * @param imagePairs APIから返却された { original, uploaded, cloudflareImageId }[]
  * @param session next-authのSession
- * @param documentId ドキュメントID（任意）
  * @param metaMap 画像URL→{originalFilename, fileSize, contentType} のMap（任意）
  */
 export async function handleUpsertImagesToDB(
@@ -16,7 +15,6 @@ export async function handleUpsertImagesToDB(
     cloudflareImageId: string
   }[],
   session: Session | null,
-  documentId?: string,
   metaMap?: Map<
     string,
     { originalFilename?: string; fileSize?: number; contentType?: string }
@@ -29,7 +27,6 @@ export async function handleUpsertImagesToDB(
     const input: ImageUpsertInput = {
       cloudflareImageId: pair.cloudflareImageId,
       userId: session.user.id,
-      documentId,
       originalFilename: meta.originalFilename,
       fileSize: meta.fileSize,
       contentType: meta.contentType,

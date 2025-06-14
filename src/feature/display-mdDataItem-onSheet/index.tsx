@@ -25,9 +25,9 @@ export default function DisplayMdDataItemOnSheet({
 }) {
   const { mdData } = useMdData()
   return (
-    <div className='mt-4 overflow-y-scroll h-5/12'>
+    <div className='mt-4 overflow-y-scroll max-h-5/12 min-h-[240px]'>
       <SheetContentHeader title='Slides' current={current} limit={limit} />
-      <div className='mt-[-15px]'>
+      <div className='mt-[-14px]'>
         {mdDatas.map(item => {
           return (
             <div
