@@ -2,6 +2,8 @@
 import { db, images } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import type { Session } from 'next-auth'
+import { unstable_cache } from 'next/cache'
+import { FREE_IMAGE_LIMIT, PRO_IMAGE_LIMIT } from './constants'
 
 export type ImageUpsertInput = {
   cloudflareImageId: string
@@ -12,9 +14,19 @@ export type ImageUpsertInput = {
   hash?: string
 }
 
-export async function upsertImageToDB(input: ImageUpsertInput) {
+export async function upsertImageToDB(
+  input: ImageUpsertInput,
+  session: Session | null,
+) {
   if (!input.cloudflareImageId || !input.userId) {
     throw new Error('cloudflareImageIdとuserIdは必須です')
+  }
+  // 制限チェック
+  const canUpsert = await canUpsertImage(session)
+  if (!canUpsert) {
+    throw new Error(
+      '画像アップロード上限に達しています。不要な画像を削除してください。',
+    )
   }
   // drizzle-ormのonConflictDoUpdateを利用
   await db
@@ -61,15 +73,33 @@ export async function findImageByHash(hash: string) {
   return result[0] ?? null
 }
 
-export async function getCloudFlareImageIds(session: Session | null) {
-  if (!session?.user?.id) {
-    return []
-  }
-
-  return await db
-    .select({
-      cloudflareImageId: images.cloudflareImageId,
-    })
-    .from(images)
-    .where(eq(images.userId, session.user.id))
+// 画像アップサート可能か判定
+export async function canUpsertImage(
+  session: Session | null,
+): Promise<boolean> {
+  if (!session?.user) return false
+  const imageIds = await getCloudFlareImageIds(session)
+  const currentCount = imageIds.length
+  return session.user.isPro
+    ? currentCount < PRO_IMAGE_LIMIT
+    : currentCount < FREE_IMAGE_LIMIT
 }
+
+export const getCloudFlareImageIds = unstable_cache(
+  async (session: Session | null) => {
+    if (!session?.user?.id) {
+      return []
+    }
+
+    return await db
+      .select({
+        cloudflareImageId: images.cloudflareImageId,
+      })
+      .from(images)
+      .where(eq(images.userId, session.user.id))
+  },
+  ['imageIds'],
+  {
+    tags: ['imageIds'],
+  },
+)

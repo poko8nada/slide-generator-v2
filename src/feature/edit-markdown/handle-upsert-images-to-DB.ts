@@ -33,6 +33,6 @@ export async function handleUpsertImagesToDB(
       contentType: meta.contentType,
       hash: pair.hash,
     }
-    await upsertImageToDB(input)
+    await upsertImageToDB(input, session)
   }
 }

@@ -125,14 +125,17 @@ export async function POST(
             cloudflareImageId = ''
           }
           // DB upsert（hash保存）
-          await upsertImageToDB({
-            cloudflareImageId,
-            userId,
-            originalFilename: img.name,
-            fileSize: img.size,
-            contentType: img.type,
-            hash,
-          })
+          await upsertImageToDB(
+            {
+              cloudflareImageId,
+              userId,
+              originalFilename: img.name,
+              fileSize: img.size,
+              contentType: img.type,
+              hash,
+            },
+            session,
+          )
           return {
             original: url,
             uploaded: uploadedUrl,

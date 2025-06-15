@@ -2,13 +2,20 @@
 import { useState } from 'react'
 import { Check, Copy as CopyIcon } from 'lucide-react'
 import { SheetContentHeader } from '@/components/sheet-content-header'
+import type { Session } from 'next-auth'
 
 export default function DisplayImageOnSheet({
   cloudFlareImageIds,
+  session,
+  current,
+  limit,
 }: {
   cloudFlareImageIds: {
     cloudflareImageId: string
   }[]
+  session: Session | null
+  current: number
+  limit: number
 }) {
   const imageIds = cloudFlareImageIds.map(imageId => imageId.cloudflareImageId)
   const [copiedId, setCopiedId] = useState<string | null>(null)
@@ -23,11 +30,7 @@ export default function DisplayImageOnSheet({
 
   return (
     <div className='mt-10'>
-      <SheetContentHeader
-        title='Images'
-        current={imageIds.length}
-        limit={imageIds.length}
-      />
+      <SheetContentHeader title='Images' current={current} limit={limit} />
       <div className='grid grid-cols-3 gap-4 px-4 h-5/12'>
         {imageIds.map(imageId => {
           const src = `/api/images/${imageId}`
