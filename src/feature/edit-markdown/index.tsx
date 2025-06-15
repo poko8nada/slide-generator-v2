@@ -19,7 +19,7 @@ import {
   removeCloudflareImageUrls,
 } from './control-images'
 import { handleUpsertImagesToDB } from './handle-upsert-images-to-DB'
-import type { UploadedImageResult } from '@/lib/type'
+import { handleUploadImages } from '@/feature/edit-markdown/handle-upload-images'
 
 export default function EditMarkdown({
   allMdDatas,
@@ -86,18 +86,15 @@ export default function EditMarkdown({
 
               console.log('[EditMarkdown] formData', formData)
 
-              // APIへ送信
-              const res = await fetch('/api/documents/save', {
-                method: 'POST',
-                body: formData,
-              })
+              // サーバーアクションで画像アップロード
+              const data = await handleUploadImages(formData)
 
-              if (!res.ok) {
-                throw new Error('画像アップロードAPI通信エラー')
+              if ('error' in data) {
+                throw new Error(data.error)
               }
-
-              // APIから元画像URLとアップロードURLのペア配列を受け取る
-              const data: { urls: UploadedImageResult[] } = await res.json()
+              if (!data.urls || !Array.isArray(data.urls)) {
+                throw new Error('画像アップロードに失敗しました')
+              }
               console.log('[EditMarkdown] data', data)
 
               // 画像情報をDBにupsert
@@ -119,6 +116,7 @@ export default function EditMarkdown({
             } catch (e) {
               toastError(e instanceof Error ? e.message : '保存に失敗しました')
             }
+            imageMapRef.current.clear()
           }}
         >
           <CustomSubmitButton

@@ -16,4 +16,9 @@ export type UploadedImageResult = {
   hash?: string
 }
 
-export type PostResponse = { urls: UploadedImageResult[] } | { error: string }
+export type PostResponse =
+  | {
+      urls: UploadedImageResult[]
+      failed?: { original: string; error: string }[]
+    }
+  | { error: string }

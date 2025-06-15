@@ -1,6 +1,6 @@
 'use server'
 import { db, images } from '@/db/schema'
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import type { Session } from 'next-auth'
 import { unstable_cache } from 'next/cache'
 import { FREE_IMAGE_LIMIT, PRO_IMAGE_LIMIT } from './constants'
@@ -103,3 +103,24 @@ export const getCloudFlareImageIds = unstable_cache(
     tags: ['imageIds'],
   },
 )
+
+/**
+ * 画像をCloudflareImageIdとuserIdで削除
+ */
+export async function deleteImage(
+  cloudflareImageId: string,
+  session: Session | null,
+) {
+  if (!cloudflareImageId || !session?.user?.id) {
+    throw new Error('cloudflareImageIdとユーザーセッションは必須です')
+  }
+
+  await db
+    .delete(images)
+    .where(
+      and(
+        eq(images.cloudflareImageId, cloudflareImageId),
+        eq(images.userId, session.user.id),
+      ),
+    )
+}

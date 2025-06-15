@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { Check, Copy as CopyIcon } from 'lucide-react'
+import { Trash2, Check, Copy as CopyIcon } from 'lucide-react'
 import { SheetContentHeader } from '@/components/sheet-content-header'
 import type { Session } from 'next-auth'
 
@@ -69,6 +69,7 @@ export default function DisplayImageOnSheet({
                   hover:bg-red-500 hover:text-white hover:shadow-md hover:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-300'
                   // onClick={handleDelete} // デリート関数は未実装
                 >
+                  <Trash2 size={14} aria-label='delete' />
                   Delete
                 </button>
               </div>
