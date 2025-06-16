@@ -1,8 +1,10 @@
 'use client'
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import { Trash2, Check, Copy as CopyIcon } from 'lucide-react'
 import { SheetContentHeader } from '@/components/sheet-content-header'
 import type { Session } from 'next-auth'
+import { handleDeleteImage } from './handle-delete-image'
+import { toastSuccess, toastError } from '@/components/custom-toast'
 
 export default function DisplayImageOnSheet({
   cloudFlareImageIds,
@@ -19,6 +21,7 @@ export default function DisplayImageOnSheet({
 }) {
   const imageIds = cloudFlareImageIds.map(imageId => imageId.cloudflareImageId)
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition()
 
   const handleCopy = (src: string, id: string) => {
     if (navigator.clipboard) {
@@ -26,6 +29,19 @@ export default function DisplayImageOnSheet({
       setCopiedId(id)
       setTimeout(() => setCopiedId(null), 1200)
     }
+  }
+
+  const handleDelete = (imageId: string) => {
+    if (!session) return
+    startTransition(async () => {
+      const res = await handleDeleteImage({ imageId, session })
+      if (res.status === 'success') {
+        toastSuccess('画像を削除しました')
+        // ページリロードや再取得は親で制御する想定
+      } else {
+        toastError(res.message)
+      }
+    })
   }
 
   return (
@@ -67,7 +83,8 @@ export default function DisplayImageOnSheet({
                   type='button'
                   className='flex items-center gap-1 text-red-500 text-xs font-medium px-2 py-1 rounded-md cursor-pointer border border-red-200 shadow-sm bg-white/80 backdrop-blur-sm transition
                   hover:bg-red-500 hover:text-white hover:shadow-md hover:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-300'
-                  // onClick={handleDelete} // デリート関数は未実装
+                  onClick={() => handleDelete(imageId)}
+                  disabled={isPending}
                 >
                   <Trash2 size={14} aria-label='delete' />
                   Delete
