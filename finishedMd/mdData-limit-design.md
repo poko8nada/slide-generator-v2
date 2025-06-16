@@ -1,3 +1,5 @@
+完了
+
 # スライド保存数上限設計・実装指示書
 
 ## 進捗
@@ -23,11 +25,11 @@ usersテーブルにisProカラム追加済み
 ## 3. 保存上限判定ロジック設計
 
 - 新規作成時、`getMdDatas(session)`で件数取得
-- `isPro`判定し、上限値（FREE_LIMIT/PRO_LIMIT）を分岐
+- `isPro`判定し、上限値（FREE_MD_LIMIT/PRO_MD_LIMIT）を分岐
 - 上限値定義：**推奨案** [`src/lib/mdData-crud.ts`](src/lib/mdData-crud.ts) などサーバ専用ロジック層で定義
   - フロントから直接import不可でセキュリティ確保
   - 型安全・補完・テスト機能と一体管理
-  - 例：`const FREE_LIMIT = 10; const PRO_LIMIT = 999;`
+  - 例：`const FREE_MD_LIMIT = 10; const PRO_MD_LIMIT = 999;`
 - 上限超過時は保存処理中断しエラー返却
 - 判定関数例：`canCreateMdData(user: UserWithPro, currentCount: number): boolean`
 
@@ -114,7 +116,7 @@ flowchart TD
   B -- Yes --> C[getMdDatasで件数取得]
   C --> D{isPro?}
   D -- No --> E{件数>=10?}
-  D -- Yes --> F{件数>=PRO_LIMIT?}
+  D -- Yes --> F{件数>=PRO_MD_LIMIT?}
   E -- Yes --> H[警告・保存不可・課金誘導]
   E -- No --> I[保存実行]
   F -- Yes --> H

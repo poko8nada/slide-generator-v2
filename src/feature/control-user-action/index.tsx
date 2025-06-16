@@ -33,7 +33,7 @@ export default function ControlUserAction({
     setIsLoading(false)
   }
   return (
-    <div className='flex items-start gap-4'>
+    <div className='flex items-center gap-4'>
       <CustomButton
         isLoading={isLoading}
         onClick={handleClick}

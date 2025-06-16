@@ -3,7 +3,7 @@ import { db, mdDatas } from '@/db/schema'
 import { desc, eq, and } from 'drizzle-orm'
 import type { Session } from 'next-auth'
 import { unstable_cache } from 'next/cache'
-import { FREE_LIMIT, PRO_LIMIT } from './mdData-constants'
+import { FREE_MD_LIMIT, PRO_MD_LIMIT } from './constants'
 import type { InferSelectModel } from 'drizzle-orm'
 
 export type MdData = InferSelectModel<typeof mdDatas>
@@ -13,7 +13,7 @@ export async function canCreateMdData(
   currentCount: number,
 ): Promise<boolean> {
   if (!user) return false
-  return user.isPro ? currentCount < PRO_LIMIT : currentCount < FREE_LIMIT
+  return user.isPro ? currentCount < PRO_MD_LIMIT : currentCount < FREE_MD_LIMIT
 }
 
 export const getMdDatas = unstable_cache(
@@ -46,7 +46,7 @@ export async function createMdDataTitleByBody(body: string): Promise<string> {
   const trimmedBody = body.trim()
   if (!trimmedBody) return 'Untitled'
 
-  const firstMdData = trimmedBody.split(/(?<=\n|^)---(?=\n|$)/)[0]
+  const firstMdData = trimmedBody.split(/(?<=\r?\n|^)---(?=\r?\n|$)/)[0]
   const cleanText = firstMdData
     .replace(/^#+\s*/, '')
     .replace(/\*\*(.*?)\*\*/g, '$1')
@@ -111,8 +111,8 @@ export async function createMdData(
   if (!(await canCreateMdData(user, currentCount))) {
     throw new Error(
       user.isPro
-        ? `保存上限(${PRO_LIMIT})に達しています`
-        : `保存上限(${FREE_LIMIT})に達しています`,
+        ? `保存上限(${PRO_MD_LIMIT})に達しています`
+        : `保存上限(${FREE_MD_LIMIT})に達しています`,
     )
   }
   try {

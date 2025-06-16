@@ -10,29 +10,30 @@ import { CustomPopover } from '@/components/custom-popover'
 import { useMdData } from '@/providers/md-data-provider'
 import { cn } from '@/lib/utils'
 import { Trash2 } from 'lucide-react'
+import { SheetContentHeader } from '@/components/sheet-content-header'
 
-export default function DisplaySlideItemOnSheet({
+export default function DisplayMdDataItemOnSheet({
   mdDatas,
   session,
+  current,
+  limit,
 }: {
   mdDatas: MdData[]
   session: Session | null
+  current: number
+  limit: number
 }) {
   const { mdData } = useMdData()
   return (
-    <div className='mt-4 overflow-y-auto'>
-      <div className='grid grid-cols-2 gap-x-4 px-4 py-2 font-semibold text-sm text-gray-500 sticky top-0 bg-white z-10'>
-        <span>ファイル名</span>
-        <span className='text-right'>最終更新日</span>
-      </div>
-      <div className='h-3 w-full bg-gradient-to-b from-black/10 to-transparent pointer-events-none z-[9] sticky top-[36px]' />
-      <div className='mt-[-15px]'>
+    <div className='mt-4 overflow-y-scroll max-h-5/12 min-h-[240px]'>
+      <SheetContentHeader title='Slides' current={current} limit={limit} />
+      <div className='mt-[-14px]'>
         {mdDatas.map(item => {
           return (
             <div
               key={item.id}
               className={cn(
-                'group hover:bg-gray-100 transition flex justify-between w-full items-center gap-1 border-b  cursor-pointer pl-4 pr-1 py-2',
+                'group bg-gray-50 hover:bg-gray-100 transition flex justify-between w-full items-center gap-1 border-b  cursor-pointer pl-4 pr-1 py-2',
                 mdData?.id === item.id && 'bg-gray-200',
               )}
             >

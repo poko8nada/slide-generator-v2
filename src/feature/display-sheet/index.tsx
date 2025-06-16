@@ -17,7 +17,6 @@ import type { Session } from 'next-auth'
 import { useState } from 'react'
 import handleCreateNewMdData from './handle-create-new-mdData'
 import { useMdData } from '@/providers/md-data-provider'
-import { MdDataCountIndicator } from '@/components/mdData-count-indicator'
 import { toastSuccess, toastError } from '@/components/custom-toast'
 
 type MdDataCount = { current: number; limit: number; isPro: boolean }
@@ -38,10 +37,10 @@ export default function DisplaySheet({
       >
         <Menu />
       </SheetTrigger>
-      <SheetContent side='left'>
+      <SheetContent side='left' className='max-h-full'>
         <SheetHeader>
           <SheetTitle className='sr-only'>MarkDown</SheetTitle>
-          <div className='flex gap-3'>
+          <div className='flex items-center gap-2'>
             <Form
               action={async () => {
                 const result = await handleCreateNewMdData(session)
@@ -61,11 +60,6 @@ export default function DisplaySheet({
                 new md file
               </CustomSubmitButton>
             </Form>
-            <MdDataCountIndicator
-              current={mdDataCount.current}
-              limit={mdDataCount.limit}
-              isPro={mdDataCount.isPro}
-            />
           </div>
         </SheetHeader>
         {children}

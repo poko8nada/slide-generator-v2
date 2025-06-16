@@ -1,11 +1,13 @@
 import markdownToHtml from '@/lib/parse'
 import hljs from 'highlight.js'
-import { type RefObject, useEffect } from 'react'
+import { type RefObject, useEffect, useRef } from 'react'
 import type Reveal from 'reveal.js'
 
 function getSlides(md: string): Promise<string[]> {
   // Markdownをスライドに分割 (3本のハイフンのみを対象)
-  const slides = md.split(/(?<=\n|^)---(?=\n|$)/).map(content => content.trim())
+  const slides = md
+    .split(/(?<=\r?\n|^)---(?=\r?\n|$)/)
+    .map(content => content.trim())
 
   // スライドをHTMLに変換
   const htmlSlides = Promise.all(
@@ -131,28 +133,26 @@ export function useRevealInit(
   setLoading: React.Dispatch<React.SetStateAction<boolean>>,
   styleRef: RefObject<HTMLStyleElement | null>,
 ) {
-  // 初期化時にmdDataが''だった場合、初期化されないため空文字を入れる
-  let formattedInitMdData = initMdData
-  if (formattedInitMdData === '') {
-    formattedInitMdData = ' '
-  }
-  // refはuseEffectの依存配列に含めなくてよい
+  const isInitializing = useRef(false)
+
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
-    // initMdDataがnullなら何もしない
-    if (!formattedInitMdData) {
+    if (!initMdData || initMdData.trim() === '') {
       return
     }
-    // すでに初期化済みなら再初期化しない
-    if (revealRef.current) {
+    if (revealRef.current || isInitializing.current) {
       return
     }
     const init = async () => {
-      console.log('Initializing Reveal.js...')
-
-      if (!containerRef.current) return
-      const Reveal = (await import('reveal.js')).default
+      isInitializing.current = true
       try {
+        // すでに初期化済みなら前のインスタンスを破棄
+        if (revealRef.current) {
+          revealRef.current.destroy()
+          revealRef.current = null
+        }
+        if (!containerRef.current) return
+        const Reveal = (await import('reveal.js')).default
         revealRef.current = new Reveal(containerRef.current, {
           embedded: true,
           autoSlide: false,
@@ -164,25 +164,21 @@ export function useRevealInit(
           keyboard: false,
           scrollActivationWidth: 0,
         })
-
-        const slides = await getSlides(formattedInitMdData)
+        const slides = await getSlides(initMdData)
         setSlides(slides, slidesRef, revealRef, 0)
-
         await revealRef.current.initialize()
-
         fixImageHeight(slidesRef, styleRef)
         updateSlides(activeSlideIndex, revealRef)
-
-        console.log('Reveal.js initialized.')
         setLoading(false)
       } catch (error) {
         throw new Error(`Initialization error: ${error}`)
+      } finally {
+        isInitializing.current = false
       }
     }
-
     init()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [formattedInitMdData])
+  }, [initMdData])
 
   // refはuseEffectの依存配列に含めなくてよい
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
@@ -220,6 +216,5 @@ export function useRevealUpdate(
       }
     }
     update()
-    console.log('setSlide')
   }, [mdData, activeSlideIndex])
 }

@@ -3,15 +3,16 @@
 import { revalidateTag } from 'next/cache'
 import { updateMdData } from '@/lib/mdData-crud'
 import type { Session } from 'next-auth'
-import type { serverResponseResult } from '@/lib/type'
+import type { ServerResponseResult } from '@/lib/type'
 
-export default async function handleCreateNewMdData(
+export default async function handleUpdateMdData(
   id: string,
-  body: string,
+  replacedMd: string,
   session: Session | null,
-): Promise<serverResponseResult> {
+): Promise<ServerResponseResult> {
   try {
-    await updateMdData(id, body, session)
+    await updateMdData(id, replacedMd, session)
+
     revalidateTag('mdDatas')
     return {
       status: 'success',

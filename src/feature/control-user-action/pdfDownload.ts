@@ -1,6 +1,6 @@
 import { toJpeg } from 'html-to-image'
 import jsPDF from 'jspdf'
-import type { serverResponseResult } from '@/lib/type'
+import type { ServerResponseResult } from '@/lib/type'
 
 function createCloneSlides(slideSnap: HTMLElement[]) {
   const slideClones = slideSnap.map(item =>
@@ -61,7 +61,7 @@ function customListStyle(slide: HTMLElement) {
 
 export async function pdfDownload(
   slideSnap: HTMLElement[],
-): Promise<serverResponseResult> {
+): Promise<ServerResponseResult> {
   const { slideClones, container } = createCloneSlides(slideSnap)
   if (slideClones.length === 0)
     return Promise.resolve({
