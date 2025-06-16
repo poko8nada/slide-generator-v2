@@ -1,10 +1,12 @@
 'use client'
-import { useState, useTransition } from 'react'
+import { useState } from 'react'
 import { Trash2, Check, Copy as CopyIcon } from 'lucide-react'
 import { SheetContentHeader } from '@/components/sheet-content-header'
 import type { Session } from 'next-auth'
 import { handleDeleteImage } from './handle-delete-image'
 import { toastSuccess, toastError } from '@/components/custom-toast'
+import Form from 'next/form'
+import { useFormStatus } from 'react-dom'
 
 export default function DisplayImageOnSheet({
   cloudFlareImageIds,
@@ -21,7 +23,6 @@ export default function DisplayImageOnSheet({
 }) {
   const imageIds = cloudFlareImageIds.map(imageId => imageId.cloudflareImageId)
   const [copiedId, setCopiedId] = useState<string | null>(null)
-  const [isPending, startTransition] = useTransition()
 
   const handleCopy = (src: string, id: string) => {
     if (navigator.clipboard) {
@@ -31,17 +32,34 @@ export default function DisplayImageOnSheet({
     }
   }
 
-  const handleDelete = (imageId: string) => {
-    if (!session) return
-    startTransition(async () => {
-      const res = await handleDeleteImage({ imageId, session })
-      if (res.status === 'success') {
-        toastSuccess('画像を削除しました')
-        // ページリロードや再取得は親で制御する想定
-      } else {
-        toastError(res.message)
-      }
-    })
+  function DeleteImageForm({
+    imageId,
+    session,
+  }: { imageId: string; session: Session | null }) {
+    const { pending } = useFormStatus()
+    return (
+      <Form
+        action={async () => {
+          if (!session) return
+          const res = await handleDeleteImage({ imageId, session })
+          if (res.status === 'success') {
+            toastSuccess('画像を削除しました')
+          } else {
+            toastError(res.message)
+          }
+        }}
+      >
+        <button
+          type='submit'
+          className='flex items-center gap-1 text-red-500 text-xs font-medium px-2 py-1 rounded-md cursor-pointer border border-red-200 shadow-sm bg-white/80 backdrop-blur-sm transition
+          hover:bg-red-500 hover:text-white hover:shadow-md hover:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-300'
+          disabled={pending}
+        >
+          <Trash2 size={14} aria-label='delete' />
+          Delete
+        </button>
+      </Form>
+    )
   }
 
   return (
@@ -59,6 +77,11 @@ export default function DisplayImageOnSheet({
                 src={src}
                 alt={`${imageId}`}
                 className='w-full h-full object-contain transition duration-200 group-hover:blur-sm'
+                onError={e => {
+                  e.currentTarget.onerror = null
+                  e.currentTarget.src = '/image-deleted-placeholder.svg'
+                  e.currentTarget.alt = '画像は削除されました'
+                }}
               />
               <div className='absolute inset-0 flex flex-col justify-center items-center gap-2 p-2 group-hover:opacity-100 opacity-0 transition-opacity ease-in duration-200 bg-gray-100/80'>
                 <button
@@ -79,16 +102,7 @@ export default function DisplayImageOnSheet({
                     </>
                   )}
                 </button>
-                <button
-                  type='button'
-                  className='flex items-center gap-1 text-red-500 text-xs font-medium px-2 py-1 rounded-md cursor-pointer border border-red-200 shadow-sm bg-white/80 backdrop-blur-sm transition
-                  hover:bg-red-500 hover:text-white hover:shadow-md hover:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-300'
-                  onClick={() => handleDelete(imageId)}
-                  disabled={isPending}
-                >
-                  <Trash2 size={14} aria-label='delete' />
-                  Delete
-                </button>
+                <DeleteImageForm imageId={imageId} session={session} />
               </div>
             </div>
           )
