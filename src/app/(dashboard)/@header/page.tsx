@@ -7,7 +7,7 @@ import DisplayMdDataItemOnSheet from '@/feature/display-mdDataItem-onSheet'
 import { type MdData, getMdDatas } from '@/lib/mdData-crud'
 import { getCountInfo } from './getCountAction'
 import DisplayImageOnSheet from '@/feature/display-image-onSheet'
-import { getCloudFlareImageIds } from '@/lib/image-crud'
+import { getCloudFlareImageIds } from '@/lib/imageId-crud'
 
 export default async function Page() {
   const session = await auth()

@@ -1,5 +1,5 @@
 'use server'
-import { upsertImageToDB, type ImageUpsertInput } from '@/lib/image-crud'
+import { upsertImageId, type ImageUpsertInput } from '@/lib/imageId-crud'
 import type { Session } from 'next-auth'
 import { revalidateTag } from 'next/cache'
 
@@ -28,7 +28,7 @@ export async function handleUpsertImagesToDB(
       contentType: meta.contentType,
       hash: pair.hash,
     }
-    await upsertImageToDB(input, session)
+    await upsertImageId(input, session)
   }
   revalidateTag('imageIds')
 }

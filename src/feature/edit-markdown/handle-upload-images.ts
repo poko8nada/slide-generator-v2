@@ -2,7 +2,7 @@
 
 import { auth } from '@/auth'
 import type { PostResponse, UploadedImageResult } from '@/lib/type'
-import { findImageByHash } from '@/lib/image-crud'
+import { findImageIdByHash } from '@/lib/imageId-crud'
 import { FREE_IMAGE_LIMIT, PRO_IMAGE_LIMIT } from '@/lib/constants'
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024 // 5MB
@@ -97,7 +97,7 @@ export async function handleUploadImages(
         // 1. ハッシュ生成
         const hash = await generateHashFromFile(img)
         // 2. 重複チェック
-        const found = await findImageByHash(hash)
+        const found = await findImageIdByHash(hash)
         if (found?.cloudflareImageId) {
           // 既存画像
           const uploadedUrl = `https://imagedelivery.net/${process.env.CLOUDFLARE_ACCOUNT_ID}/${found.cloudflareImageId}/public`

@@ -14,7 +14,7 @@ export type ImageUpsertInput = {
   hash?: string
 }
 
-export async function upsertImageToDB(
+export async function upsertImageId(
   input: ImageUpsertInput,
   session: Session | null,
 ) {
@@ -22,7 +22,7 @@ export async function upsertImageToDB(
     throw new Error('cloudflareImageIdとuserIdは必須です')
   }
   // 制限チェック
-  const canUpsert = await canUpsertImage(session)
+  const canUpsert = await canUpsertImageId(session)
   if (!canUpsert) {
     throw new Error(
       '画像アップロード上限に達しています。不要な画像を削除してください。',
@@ -55,7 +55,7 @@ export async function upsertImageToDB(
 /**
  * 画像ハッシュで既存画像を検索
  */
-export async function findImageByHash(hash: string) {
+export async function findImageIdByHash(hash: string) {
   const result = await db
     .select({
       cloudflareImageId: images.cloudflareImageId,
@@ -74,7 +74,7 @@ export async function findImageByHash(hash: string) {
 }
 
 // 画像アップサート可能か判定
-export async function canUpsertImage(
+export async function canUpsertImageId(
   session: Session | null,
 ): Promise<boolean> {
   if (!session?.user) return false
@@ -107,7 +107,7 @@ export const getCloudFlareImageIds = unstable_cache(
 /**
  * 画像をCloudflareImageIdとuserIdで削除
  */
-export async function deleteImage(
+export async function deleteImageId(
   cloudflareImageId: string,
   session: Session | null,
 ) {
