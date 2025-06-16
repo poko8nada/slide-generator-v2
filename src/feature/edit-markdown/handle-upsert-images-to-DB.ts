@@ -1,13 +1,8 @@
 'use server'
 import { upsertImageToDB, type ImageUpsertInput } from '@/lib/image-crud'
 import type { Session } from 'next-auth'
+import { revalidateTag } from 'next/cache'
 
-/**
- * Cloudflareアップロード後の画像ペア配列をDBにupsertする
- * @param imagePairs APIから返却された { original, uploaded, cloudflareImageId }[]
- * @param session next-authのSession
- * @param metaMap 画像URL→{originalFilename, fileSize, contentType} のMap（任意）
- */
 export async function handleUpsertImagesToDB(
   imagePairs: {
     original: string
@@ -35,4 +30,5 @@ export async function handleUpsertImagesToDB(
     }
     await upsertImageToDB(input, session)
   }
+  revalidateTag('imageIds')
 }

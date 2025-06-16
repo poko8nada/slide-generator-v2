@@ -2,7 +2,7 @@
 
 import { auth } from '@/auth'
 import type { PostResponse, UploadedImageResult } from '@/lib/type'
-import { findImageByHash, upsertImageToDB } from '@/lib/image-crud'
+import { findImageByHash } from '@/lib/image-crud'
 import { FREE_IMAGE_LIMIT, PRO_IMAGE_LIMIT } from '@/lib/constants'
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024 // 5MB
@@ -118,18 +118,7 @@ export async function handleUploadImages(
         } catch {
           cloudflareImageId = ''
         }
-        // DB upsert（hash保存）
-        await upsertImageToDB(
-          {
-            cloudflareImageId,
-            userId,
-            originalFilename: img.name,
-            fileSize: img.size,
-            contentType: img.type,
-            hash,
-          },
-          session,
-        )
+        // DB upsertはここでは行わない（責務分離のため）
         uploadedPairs.push({
           original: url,
           uploaded: uploadedUrl,
