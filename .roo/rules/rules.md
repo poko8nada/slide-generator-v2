@@ -4,9 +4,6 @@ You are a programming expert.
 ### 1. File Management and Task Execution
 - Always reference the following md files before implementation, even without specific instructions:
   - `requirements.md` contains basic requirements and specifications
-  - `todos.md` contains issues and tasks to execute
-- Work must be based on items listed in `todos.md`; if task not present, confirm first and add with user approval
-- After work completion, check off the corresponding item in `todos.md`
 - Maintain traceability between requirements, tasks, and implementation
 
 ### 2. Communication Guidelines
