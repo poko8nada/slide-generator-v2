@@ -14,9 +14,12 @@ import { toastError, toastSuccess } from '@/components/custom-toast'
 import CustomSubmitButton from '@/components/custom-submit-button'
 import Form from 'next/form'
 import handleUpdateMdData from './handle-update-mdData'
-import { fetchAndRegisterExternalImages } from './fetchAndRegisterExternalImages'
+import {
+  fetchAndRegisterExternalImages,
+  removeCloudflareImageUrls,
+} from './control-images'
 import { handleUpsertImagesToDB } from './handle-upsert-images-to-DB'
-import type { UploadedImageResult } from '@/lib/type'
+import { handleUploadImages } from '@/feature/edit-markdown/handle-upload-images'
 
 export default function EditMarkdown({
   allMdDatas,
@@ -58,10 +61,38 @@ export default function EditMarkdown({
         <Form
           action={async () => {
             try {
+              // 削除画像検出・確認・除去フロー
+              const { getDeletedImageIdsFromMarkdown } = await import(
+                './detect-deleted-images'
+              )
+              // Markdown本文から削除画像ID検出
+              const deletedIds = await getDeletedImageIdsFromMarkdown(
+                mdData.body,
+              )
+              let mdBodyForSave = mdData.body
+
+              if (deletedIds.length > 0) {
+                const confirmMsg = `削除済み画像が本文に含まれています。\n${deletedIds.map(id => `/api/images/${id}`).join('\n')}\nこれらを除去して保存しますか？`
+                const ok = window.confirm(confirmMsg)
+                if (!ok) {
+                  toastError('保存を中止しました')
+                  return
+                }
+                // Markdownから該当画像URLを除去
+                mdBodyForSave = removeDeletedImageUrls(
+                  mdBodyForSave,
+                  deletedIds,
+                )
+              }
+
+              // 特定の画像URLを取り除く
+              const mdWithoutImages =
+                await removeCloudflareImageUrls(mdBodyForSave)
+
               // blobは先にimageMapに登録済み
               // 外部画像fetch→File化→imageMap登録
               await fetchAndRegisterExternalImages(
-                mdData.body,
+                mdWithoutImages,
                 imageMapRef.current,
               )
               console.log('[EditMarkdown] imageMapRef.current', imageMapRef)
@@ -78,25 +109,22 @@ export default function EditMarkdown({
 
               console.log('[EditMarkdown] formData', formData)
 
-              // APIへ送信
-              const res = await fetch('/api/documents/save', {
-                method: 'POST',
-                body: formData,
-              })
+              // サーバーアクションで画像アップロード
+              const data = await handleUploadImages(formData)
 
-              if (!res.ok) {
-                throw new Error('画像アップロードAPI通信エラー')
+              if ('error' in data) {
+                throw new Error(data.error)
               }
-
-              // APIから元画像URLとアップロードURLのペア配列を受け取る
-              const data: { urls: UploadedImageResult[] } = await res.json()
+              if (!data.urls || !Array.isArray(data.urls)) {
+                throw new Error('画像アップロードに失敗しました')
+              }
               console.log('[EditMarkdown] data', data)
 
               // 画像情報をDBにupsert
-              await handleUpsertImagesToDB(data.urls, session, mdData.id)
+              await handleUpsertImagesToDB(data.urls, session)
 
               // Markdown本文の画像URLをアップロード後のURLで置換
-              let replacedMd = mdData.body
+              let replacedMd = mdBodyForSave
               for (const img of data.urls) {
                 // img.cloudflareImageId を使って /api/images/[imageId] 形式に置換
                 const apiUrl = `/api/images/${img.cloudflareImageId}`
@@ -111,6 +139,7 @@ export default function EditMarkdown({
             } catch (e) {
               toastError(e instanceof Error ? e.message : '保存に失敗しました')
             }
+            imageMapRef.current.clear()
           }}
         >
           <CustomSubmitButton
@@ -124,4 +153,19 @@ export default function EditMarkdown({
       )}
     </div>
   )
+}
+
+// Markdown本文から削除画像URLを除去する関数
+function removeDeletedImageUrls(
+  markdown: string,
+  deletedIds: string[],
+): string {
+  if (!deletedIds.length) return markdown
+  let result = markdown
+  for (const id of deletedIds) {
+    // ![alt]( /api/images/[id] ) の形式を除去
+    const regex = new RegExp(`!\\[.*?\\]\\(/api/images/${id}\\)\\s*`, 'g')
+    result = result.replace(regex, '')
+  }
+  return result
 }

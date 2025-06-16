@@ -1,12 +1,18 @@
 // src/app/api/images/[imageId]/route.ts
 import { NextResponse } from 'next/server'
 import { eq } from 'drizzle-orm'
-import { db } from '@/db/schema' // DBインスタンス仮定
-// imagesテーブル定義はcloudflare-images-overview.md準拠で仮定
+import { db } from '@/db/schema'
 import { images } from '@/db/schema'
 import { auth } from '@/auth'
 
 const CLOUDFLARE_IMAGES_URL = `https://imagedelivery.net/${process.env.CLOUDFLARE_ACCOUNT_HASH}`
+
+const DELETED_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#f0f0f0"/>
+  <text x="200" y="150" font-size="24" text-anchor="middle" fill="#999" dy=".3em">
+    Image Not Found
+  </text>
+</svg>`
 
 export async function GET(
   _request: Request,
@@ -34,10 +40,14 @@ export async function GET(
       .then(rows => rows[0])
 
     if (!image) {
-      return NextResponse.json(
-        { error: '画像が見つかりませんでした。' },
-        { status: 404 },
-      )
+      // 画像がDBにない場合は削除済みSVGを返す
+      return new NextResponse(DELETED_SVG, {
+        status: 200,
+        headers: {
+          'Content-Type': 'image/svg+xml',
+          'Cache-Control': 'public, max-age=86400',
+        },
+      })
     }
 
     if (image.userId !== userId) {
@@ -52,17 +62,14 @@ export async function GET(
     })
 
     if (!cfRes.ok) {
-      console.error(
-        'Cloudflare Images fetch failed:',
-        cfRes.status,
-        cfRes.statusText,
-      )
-      return NextResponse.json(
-        {
-          error: `Cloudflare Imagesから画像取得に失敗しました。Status: ${cfRes.status}`,
+      // Cloudflareから画像が消えている場合も削除済みSVGを返す
+      return new NextResponse(DELETED_SVG, {
+        status: 200,
+        headers: {
+          'Content-Type': 'image/svg+xml',
+          'Cache-Control': 'public, max-age=86400',
         },
-        { status: 502 },
-      )
+      })
     }
 
     // 画像データをそのままレスポンス

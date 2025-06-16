@@ -5,12 +5,26 @@ import ControlUserAction from '@/feature/control-user-action'
 import DisplaySheet from '@/feature/display-sheet'
 import DisplayMdDataItemOnSheet from '@/feature/display-mdDataItem-onSheet'
 import { type MdData, getMdDatas } from '@/lib/mdData-crud'
-import { getMdDataCountAction } from './getMdDataCountAction'
+import { getCountInfo } from './getCountAction'
+import DisplayImageOnSheet from '@/feature/display-image-onSheet'
+import { getCloudFlareImageIds } from '@/lib/imageId-crud'
 
 export default async function Page() {
   const session = await auth()
   const mdDatas: MdData[] = await getMdDatas(session)
-  const mdDataCount = await getMdDataCountAction(session)
+  const cloudFlareImageIds = await getCloudFlareImageIds(session)
+
+  const mdDataCount = getCountInfo({
+    session,
+    items: mdDatas,
+    type: 'mdData',
+  })
+
+  const imageCount = getCountInfo({
+    session,
+    items: cloudFlareImageIds,
+    type: 'image',
+  })
 
   return (
     <>
@@ -18,10 +32,23 @@ export default async function Page() {
         <div className='flex items-center gap-2'>
           {session && (
             <DisplaySheet session={session} mdDataCount={mdDataCount}>
-              <DisplayMdDataItemOnSheet mdDatas={mdDatas} session={session} />
+              <div className='overflow-y-scroll'>
+                <DisplayMdDataItemOnSheet
+                  mdDatas={mdDatas}
+                  session={session}
+                  current={mdDataCount.current}
+                  limit={mdDataCount.limit}
+                />
+                <DisplayImageOnSheet
+                  cloudFlareImageIds={cloudFlareImageIds}
+                  session={session}
+                  current={imageCount.current}
+                  limit={imageCount.limit}
+                />
+              </div>
             </DisplaySheet>
           )}
-          <HeaderLogo />
+          <HeaderLogo isPro={mdDataCount.isPro} />
         </div>
         <ControlUserAction session={session} />
       </GeneralHeader>

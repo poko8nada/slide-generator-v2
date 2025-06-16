@@ -140,20 +140,17 @@ export const images = sqliteTable(
     userId: text('userId')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
-    documentId: text('documentId')
-      .notNull()
-      .references(() => mdDatas.id, { onDelete: 'cascade' }),
     originalFilename: text('originalFilename').notNull(),
     fileSize: integer('fileSize').notNull(),
+    hash: text('hash').unique(),
     contentType: text('contentType').notNull(),
     createdAt: integer('createdAt', { mode: 'timestamp_ms' }).notNull(),
   },
   images => [
     // Add composite unique index for upsert
-    unique('images_cloudflare_user_doc_unique').on(
+    unique('images_cloudflare_user_unique').on(
       images.cloudflareImageId,
       images.userId,
-      images.documentId,
     ),
   ],
 )
