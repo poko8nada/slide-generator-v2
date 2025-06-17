@@ -1,4 +1,5 @@
 'use client'
+import { IconButton } from '@/components/ui/icon-button'
 import { useState } from 'react'
 import { Trash2, Check, Copy as CopyIcon } from 'lucide-react'
 import { SheetContentHeader } from '@/components/sheet-content-header'
@@ -49,15 +50,10 @@ export default function DisplayImageOnSheet({
           }
         }}
       >
-        <button
-          type='submit'
-          className='flex items-center gap-1 text-red-500 text-xs font-medium px-2 py-1 rounded-md cursor-pointer border border-red-200 shadow-sm bg-white/80 backdrop-blur-sm transition
-          hover:bg-red-500 hover:text-white hover:shadow-md hover:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-300'
-          disabled={pending}
-        >
+        <IconButton type='submit' colorScheme='red' disabled={pending}>
           <Trash2 size={14} aria-label='delete' />
           Delete
-        </button>
+        </IconButton>
       </Form>
     )
   }
@@ -84,10 +80,9 @@ export default function DisplayImageOnSheet({
                 }}
               />
               <div className='absolute inset-0 flex flex-col justify-center items-center gap-2 p-2 group-hover:opacity-100 opacity-0 transition-opacity ease-in duration-200 bg-gray-100/80'>
-                <button
+                <IconButton
                   type='button'
-                  className='flex items-center gap-1 text-gray-700 text-xs font-medium px-2 py-1 rounded-md cursor-pointer border border-gray-300 shadow-sm bg-white/80 backdrop-blur-sm transition
-                  hover:bg-gray-700 hover:text-white hover:shadow-md hover:border-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-400'
+                  colorScheme='gray'
                   onClick={() => handleCopy(src, imageId)}
                 >
                   {copiedId === imageId ? (
@@ -101,7 +96,7 @@ export default function DisplayImageOnSheet({
                       Copy
                     </>
                   )}
-                </button>
+                </IconButton>
                 <DeleteImageForm imageId={imageId} session={session} />
               </div>
             </div>
