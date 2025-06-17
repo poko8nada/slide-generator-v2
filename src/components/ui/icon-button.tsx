@@ -1,9 +1,12 @@
 // src/components/ui/icon-button.tsx
-import { type ReactNode, isValidElement, cloneElement, ReactElement, SVGProps } from "react";
+'use client';
+
+import { type ReactNode, isValidElement, cloneElement, ReactElement, SVGProps, Children } from "react";
 import clsx from "clsx";
+import { useFormStatus } from "react-dom";
+import { Loader2 } from "lucide-react";
 
 type ColorScheme = "gray" | "red" | "blue" | "green";
-
 
 type IconButtonSize = "s" | "m" | "l";
 
@@ -15,6 +18,7 @@ interface IconButtonProps {
   disabled?: boolean;
   type?: "button" | "submit";
   className?: string;
+  isPending?: boolean; // 追加
 }
 
 const colorMap: Record<ColorScheme, string> = {
@@ -48,30 +52,62 @@ export function IconButton({
   disabled,
   type = "button",
   className,
+  isPending,
 }: IconButtonProps) {
-  // SVGにサイズクラスを付与
-  let icon = children;
-  if (
-    isValidElement(children) &&
-    typeof children.type === "string" &&
-    children.type === "svg"
-  ) {
-    icon = cloneElement(
-      children as ReactElement<SVGProps<SVGSVGElement>>,
-      {
-        className: clsx(
-          (children.props as { className?: string }).className,
-          iconSizeMap[size]
-        ),
+  // children内のSVGアイコンをpending時のみLoader2に置換、それ以外はそのまま
+  const renderChildren = () => {
+    return Children.map(children, (child) => {
+      if (
+        isPending &&
+        isValidElement(child) &&
+        typeof child.type === "string" &&
+        child.type === "svg"
+      ) {
+        // 元アイコンのsize/classNameを継承
+        const sizeProp = (child.props as { size?: number }).size ?? undefined;
+        const classNameProp = (child.props as { className?: string }).className ?? "";
+        return (
+          <Loader2
+            size={sizeProp}
+            className={clsx(classNameProp, iconSizeMap[size], "animate-spin")}
+          />
+        );
       }
-    );
+      if (
+        isValidElement(child) &&
+        typeof child.type === "string" &&
+        child.type === "svg"
+      ) {
+        // 通常時はアイコンにサイズクラス付与
+        return cloneElement(
+          child as ReactElement<SVGProps<SVGSVGElement>>,
+          {
+            className: clsx(
+              (child.props as { className?: string }).className,
+              iconSizeMap[size]
+            ),
+          }
+        );
+      }
+      // テキストや他要素はそのまま
+      return child;
+    });
+  };
+
+  // type="submit"時のみuseFormStatus呼び出し
+  let formStatusPending = false;
+  if (type === "submit") {
+    const status = useFormStatus();
+    formStatusPending = status.pending;
   }
+
+  const isDisabled = Boolean(disabled || isPending || formStatusPending);
 
   return (
     <button
       type={type}
       onClick={onClick}
-      disabled={disabled}
+      disabled={isDisabled}
       className={clsx(
         "flex items-center gap-1 font-medium rounded-md cursor-pointer border shadow-sm bg-white/80 backdrop-blur-sm transition focus:outline-none focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed",
         sizeMap[size],
@@ -79,7 +115,7 @@ export function IconButton({
         className
       )}
     >
-      {icon}
+      {renderChildren()}
     </button>
   );
 }

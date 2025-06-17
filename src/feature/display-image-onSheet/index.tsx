@@ -7,7 +7,6 @@ import type { Session } from 'next-auth'
 import { handleDeleteImage } from './handle-delete-image'
 import { toastSuccess, toastError } from '@/components/custom-toast'
 import Form from 'next/form'
-import { useFormStatus } from 'react-dom'
 
 export default function DisplayImageOnSheet({
   cloudFlareImageIds,
@@ -37,7 +36,6 @@ export default function DisplayImageOnSheet({
     imageId,
     session,
   }: { imageId: string; session: Session | null }) {
-    const { pending } = useFormStatus()
     return (
       <Form
         action={async () => {
@@ -50,7 +48,7 @@ export default function DisplayImageOnSheet({
           }
         }}
       >
-        <IconButton type='submit' colorScheme='red' disabled={pending}>
+        <IconButton type='submit' colorScheme='red'>
           <Trash2 size={14} aria-label='delete' />
           Delete
         </IconButton>
