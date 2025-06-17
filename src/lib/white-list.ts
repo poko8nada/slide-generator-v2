@@ -3,7 +3,7 @@
 /**
  * 全てのホストを許可する（開発用）
  */
-export function isAllowedHost(hostname: string): boolean {
+export function isAllowedHost(_hostname: string): boolean {
   // return ALLOWED_HOSTS.some(
   //   allowed => hostname === allowed || hostname.endsWith(`.${allowed}`),
   // )

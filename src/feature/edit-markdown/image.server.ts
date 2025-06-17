@@ -1,11 +1,82 @@
+// サーバー側画像関連処理統合
 'use server'
 
+import { db, images } from '@/db/schema'
 import { auth } from '@/auth'
 import type { PostResponse, UploadedImageResult } from '@/lib/type'
-import { findImageIdByHash } from '@/lib/imageId-crud'
+import {
+  findImageIdByHash,
+  upsertImageId,
+  type ImageUpsertInput,
+} from '@/lib/imageId-crud'
 import { FREE_IMAGE_LIMIT, PRO_IMAGE_LIMIT } from '@/lib/constants'
+import type { Session } from 'next-auth'
+import { revalidateTag } from 'next/cache'
 
-const MAX_IMAGE_SIZE = 5 * 1024 * 1024 // 5MB
+/**
+ * Markdown本文から /api/images/[imageId] 形式の画像IDを抽出
+ */
+export async function extractImageIdsFromMarkdown(
+  markdown: string,
+): Promise<string[]> {
+  const regex = /!\[.*?\]\(\/api\/images\/([^\s)]+)\)/g
+  const matches = [...markdown.matchAll(regex)]
+  return matches.map(m => m[1])
+}
+
+/**
+ * DBから現存する画像IDリストを取得
+ */
+export async function fetchExistingImageIds(): Promise<string[]> {
+  try {
+    const result = await db
+      .select({ id: images.cloudflareImageId })
+      .from(images)
+    return result.map(row => row.id)
+  } catch (_e) {
+    throw new Error('画像IDリスト取得に失敗しました')
+  }
+}
+
+/**
+ * 抽出画像IDと現存画像IDリストを突合し、削除済み画像IDを返す
+ */
+export async function detectDeletedImageIds(
+  extractedIds: string[],
+  existingIds: string[],
+): Promise<string[]> {
+  const existingSet = new Set(existingIds)
+  return extractedIds.filter(id => !existingSet.has(id))
+}
+
+/**
+ * Markdown本文から削除済み画像IDリストを取得（統合関数）
+ */
+export async function getDeletedImageIdsFromMarkdown(
+  markdown: string,
+): Promise<string[]> {
+  const extracted = await extractImageIdsFromMarkdown(markdown)
+  if (extracted.length === 0) return []
+  const existing = await fetchExistingImageIds()
+  return detectDeletedImageIds(extracted, existing)
+}
+
+/**
+ * Markdown本文から削除済み画像IDに該当する画像リンクを除去
+ */
+export function removeDeletedImageUrls(
+  markdown: string,
+  deletedIds: string[],
+): string {
+  if (!deletedIds.length) return markdown
+  let result = markdown
+  for (const id of deletedIds) {
+    // ![alt]( /api/images/[id] ) の形式を除去
+    const regex = new RegExp(`!\\[.*?\\]\\(/api/images/${id}\\)\\s*`, 'g')
+    result = result.replace(regex, '')
+  }
+  return result
+}
 
 // Cloudflare Images APIレスポンス型
 interface CloudflareImagesResponse {
@@ -13,6 +84,8 @@ interface CloudflareImagesResponse {
     variants?: string[]
   }
 }
+
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024 // 5MB
 
 async function uploadToCloudflareImages(file: Blob): Promise<string> {
   const form = new FormData()
@@ -144,4 +217,37 @@ export async function handleUploadImages(
     }
     return { error: e instanceof Error ? e.message : 'Unknown error' }
   }
+}
+
+/**
+ * 画像情報をDBにupsert
+ */
+export async function handleUpsertImageIds(
+  imagePairs: {
+    original: string
+    uploaded: string
+    cloudflareImageId: string
+    hash?: string
+  }[],
+  session: Session | null,
+  metaMap?: Map<
+    string,
+    { originalFilename?: string; fileSize?: number; contentType?: string }
+  >,
+) {
+  if (!session?.user?.id)
+    throw new Error('ユーザー情報がありません（未ログイン）')
+  for (const pair of imagePairs) {
+    const meta = metaMap?.get(pair.original) ?? {}
+    const input: ImageUpsertInput = {
+      cloudflareImageId: pair.cloudflareImageId,
+      userId: session.user.id,
+      originalFilename: meta.originalFilename,
+      fileSize: meta.fileSize,
+      contentType: meta.contentType,
+      hash: pair.hash,
+    }
+    await upsertImageId(input, session)
+  }
+  revalidateTag('imageIds')
 }

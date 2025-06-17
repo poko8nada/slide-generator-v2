@@ -3,23 +3,21 @@ import MarkdownEditor from '@/components/markdown-editor'
 import { cn } from '@/lib/utils'
 import { useMdData } from '@/providers/md-data-provider'
 import { useRef, useMemo } from 'react'
-import type { ImageStore } from './markdownAction'
-import { createOptions } from './markdownAction'
-import { useUnsavedChanges, useInitialDataSync } from './useEditMarkdownEffects'
-import useMde from './useMde'
+import type { ImageStore } from './markdown.client'
+import { createOptions } from './markdown.client'
+import { useUnsavedChanges, useInitialDataSync, useMde } from './mde-hooks'
 import { Save } from 'lucide-react'
 import type { MdData } from '@/lib/mdData-crud'
 import type { Session } from 'next-auth'
 import { toastError, toastSuccess } from '@/components/custom-toast'
 import CustomSubmitButton from '@/components/custom-submit-button'
 import Form from 'next/form'
-import handleUpdateMdData from './handle-update-mdData'
+import { handleUpdateMdData } from './markdown.server'
 import {
   fetchAndRegisterExternalImages,
   removeCloudflareImageUrls,
-} from './control-images'
-import { handleUpsertImagesToDB } from './handle-upsert-images-to-DB'
-import { handleUploadImages } from '@/feature/edit-markdown/handle-upload-images'
+} from './image.client'
+import { handleUpsertImageIds, handleUploadImages } from './image.server'
 
 export default function EditMarkdown({
   allMdDatas,
@@ -62,9 +60,8 @@ export default function EditMarkdown({
           action={async () => {
             try {
               // 削除画像検出・確認・除去フロー
-              const { getDeletedImageIdsFromMarkdown } = await import(
-                './detect-deleted-images'
-              )
+              const { getDeletedImageIdsFromMarkdown, removeDeletedImageUrls } =
+                await import('./image.server')
               // Markdown本文から削除画像ID検出
               const deletedIds = await getDeletedImageIdsFromMarkdown(
                 mdData.body,
@@ -121,7 +118,7 @@ export default function EditMarkdown({
               console.log('[EditMarkdown] data', data)
 
               // 画像情報をDBにupsert
-              await handleUpsertImagesToDB(data.urls, session)
+              await handleUpsertImageIds(data.urls, session)
 
               // Markdown本文の画像URLをアップロード後のURLで置換
               let replacedMd = mdBodyForSave
@@ -156,16 +153,3 @@ export default function EditMarkdown({
 }
 
 // Markdown本文から削除画像URLを除去する関数
-function removeDeletedImageUrls(
-  markdown: string,
-  deletedIds: string[],
-): string {
-  if (!deletedIds.length) return markdown
-  let result = markdown
-  for (const id of deletedIds) {
-    // ![alt]( /api/images/[id] ) の形式を除去
-    const regex = new RegExp(`!\\[.*?\\]\\(/api/images/${id}\\)\\s*`, 'g')
-    result = result.replace(regex, '')
-  }
-  return result
-}

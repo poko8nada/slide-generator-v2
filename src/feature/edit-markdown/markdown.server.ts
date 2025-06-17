@@ -1,3 +1,4 @@
+// サーバー側: mdData更新のみ
 'use server'
 
 import { revalidateTag } from 'next/cache'
@@ -5,7 +6,10 @@ import { updateMdData } from '@/lib/mdData-crud'
 import type { Session } from 'next-auth'
 import type { ServerResponseResult } from '@/lib/type'
 
-export default async function handleUpdateMdData(
+/**
+ * mdDataを更新し、キャッシュを再検証する
+ */
+export async function handleUpdateMdData(
   id: string,
   replacedMd: string,
   session: Session | null,
