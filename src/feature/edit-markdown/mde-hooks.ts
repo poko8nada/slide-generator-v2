@@ -169,6 +169,7 @@ export function useUnsavedChanges() {
     body: '',
   })
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     // 初期化時
     if (prevData.id === '') {
@@ -199,7 +200,7 @@ export function useUnsavedChanges() {
     return () => {
       clearTimeout(timer)
     }
-  }, [mdData, prevData, setIsDiff])
+  }, [mdData, prevData])
 
   // 保存完了時に呼び出すメソッド
   const markAsSaved = () => {

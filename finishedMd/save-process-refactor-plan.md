@@ -51,7 +51,6 @@
 - `src/feature/edit-markdown/save-handler.ts`新設  
   - 保存ロジックを関数化しexport
   - Form action（62-143行目）を`handleSaveMarkdown`等に分離
-  - `removeDeletedImageUrls`は`image.server.ts`に統合済み
 
 ### 3.3 Feature連携フロー設計
 
@@ -83,8 +82,6 @@
   - After: 保存ロジック削除、props/Context経由に
 - **edit-markdown/save-handler.ts**（新設）  
   - 保存ロジック関数化、Form action移動
-- **edit-markdown/image.server.ts**
-  - `removeDeletedImageUrls`関数を統合・追加
 - **control-user-action/index.tsx等**  
   - 保存UI/ロジック新設、Context連携
 - **import/export**  

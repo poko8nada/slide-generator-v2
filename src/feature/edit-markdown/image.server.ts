@@ -1,6 +1,5 @@
 // サーバー側画像関連処理統合
 'use server'
-
 import { db, images } from '@/db/schema'
 import { auth } from '@/auth'
 import type { PostResponse, UploadedImageResult } from '@/lib/type'
@@ -57,17 +56,19 @@ export async function getDeletedImageIdsFromMarkdown(
 ): Promise<string[]> {
   const extracted = await extractImageIdsFromMarkdown(markdown)
   if (extracted.length === 0) return []
+
   const existing = await fetchExistingImageIds()
+
   return detectDeletedImageIds(extracted, existing)
 }
 
 /**
  * Markdown本文から削除済み画像IDに該当する画像リンクを除去
  */
-export function removeDeletedImageUrls(
+export async function removeDeletedImageUrls(
   markdown: string,
   deletedIds: string[],
-): string {
+): Promise<string> {
   if (!deletedIds.length) return markdown
   let result = markdown
   for (const id of deletedIds) {
