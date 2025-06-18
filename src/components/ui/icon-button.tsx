@@ -25,15 +25,15 @@ interface IconButtonProps {
 
 const colorMap: Record<ColorScheme, string> = {
   gray:
-    "text-gray-700 border-gray-300 hover:bg-gray-700 hover:text-white hover:border-gray-500 hover:shadow-md focus:ring-gray-400",
+    "text-gray-700 border-gray-300 enabled:hover:bg-gray-700 enabled:hover:text-white enabled:hover:border-gray-500 enabled:hover:shadow-md focus:ring-gray-400",
   red:
-    "text-red-500 border-red-200 hover:bg-red-500 hover:text-white hover:border-red-400 hover:shadow-md focus:ring-red-300",
+    "text-red-500 border-red-200 enabled:hover:bg-red-500 enabled:hover:text-white enabled:hover:border-red-400 enabled:hover:shadow-md focus:ring-red-300",
   blue:
-    "text-blue-600 border-blue-200 hover:bg-blue-600 hover:text-white hover:border-blue-400 hover:shadow-md focus:ring-blue-300",
+    "text-blue-600 border-blue-200 enabled:hover:bg-blue-600 enabled:hover:text-white enabled:hover:border-blue-400 enabled:hover:shadow-md focus:ring-blue-300",
   green:
-    "text-green-600 border-green-200 hover:bg-green-600 hover:text-white hover:border-green-400 hover:shadow-md focus:ring-green-300",
+    "text-green-600 border-green-200 enabled:hover:bg-green-600 enabled:hover:text-white enabled:hover:border-green-400 enabled:hover:shadow-md focus:ring-green-300",
   black:
-    "text-white border-gray-800 bg-black hover:bg-white hover:text-black hover:border-gray-800 hover:shadow-md focus:ring-black",
+    "text-white border-gray-800 bg-black enabled:hover:bg-white enabled:hover:text-black enabled:hover:border-gray-800 enabled:hover:shadow-md focus:ring-black",
 };
 
 const sizeMap: Record<IconButtonSize, string> = {
@@ -82,7 +82,7 @@ export function IconButton({
       )}
     >
       {showLoader
-        ? (loadingIcon ?? <LoaderCircle className={clsx(iconSizeMap[size], "animate-spin")} />)
+        ? (loadingIcon ?? <LoaderCircle className={clsx(iconSizeMap[size], "animate-spin m-1")} />)
         : icon}
       {children}
     </button>
