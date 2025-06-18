@@ -85,6 +85,7 @@ export async function canUpsertImageId(
     : currentCount < FREE_IMAGE_LIMIT
 }
 
+// CloudflareImageIdを取得
 export const getCloudFlareImageIds = unstable_cache(
   async (session: Session | null) => {
     if (!session?.user?.id) {

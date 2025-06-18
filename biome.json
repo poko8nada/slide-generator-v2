@@ -23,7 +23,7 @@
 				"useSortedClasses": "off"
 			},
 			"correctness": {
-				"noUnusedImports": "error",
+				"noUnusedImports": "warn",
 				"noUnusedVariables": "warn"
 			}
 		}

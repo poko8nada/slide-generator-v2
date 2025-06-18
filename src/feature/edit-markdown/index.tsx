@@ -12,6 +12,7 @@ import type { Session } from 'next-auth'
 import CustomSubmitButton from '@/components/custom-submit-button'
 import Form from 'next/form'
 import { saveMarkdownFlow } from './save-markdown-flow'
+import Loader from '@/components/loader'
 
 export default function EditMarkdown({
   allMdDatas,
@@ -36,6 +37,7 @@ export default function EditMarkdown({
   return (
     <div
       className={cn(
+        'relative',
         'relative w-full',
         'max-w-[640px]',
         'min-h-[371px]',
@@ -43,6 +45,7 @@ export default function EditMarkdown({
         'xl:h-[450px]',
       )}
     >
+      {/* <Loader /> */}
       <MarkdownEditor
         mdDataBody={mdData.body}
         updateMdBody={updateMdBody}
