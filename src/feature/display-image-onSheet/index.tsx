@@ -48,8 +48,11 @@ export default function DisplayImageOnSheet({
           }
         }}
       >
-        <IconButton type='submit' colorScheme='red'>
-          <Trash2 size={14} aria-label='delete' />
+        <IconButton
+          type='submit'
+          colorScheme='red'
+          icon={<Trash2 size={14} aria-label='delete' />}
+        >
           Delete
         </IconButton>
       </Form>
@@ -81,19 +84,16 @@ export default function DisplayImageOnSheet({
                 <IconButton
                   type='button'
                   colorScheme='gray'
+                  icon={
+                    copiedId === imageId ? (
+                      <Check size={14} aria-label='copied' />
+                    ) : (
+                      <CopyIcon size={14} aria-label='copy' />
+                    )
+                  }
                   onClick={() => handleCopy(src, imageId)}
                 >
-                  {copiedId === imageId ? (
-                    <>
-                      <Check size={14} aria-label='copied' />
-                      Copied
-                    </>
-                  ) : (
-                    <>
-                      <CopyIcon size={14} aria-label='copy' />
-                      Copy
-                    </>
-                  )}
+                  {copiedId === imageId ? 'Copied' : 'Copy'}
                 </IconButton>
                 <DeleteImageForm imageId={imageId} session={session} />
               </div>

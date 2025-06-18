@@ -4,21 +4,23 @@
 import { type ReactNode, isValidElement, cloneElement, ReactElement, SVGProps, Children } from "react";
 import clsx from "clsx";
 import { useFormStatus } from "react-dom";
-import { Loader2 } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 
-type ColorScheme = "gray" | "red" | "blue" | "green";
+type ColorScheme = "gray" | "red" | "blue" | "green" | "black";
 
 type IconButtonSize = "s" | "m" | "l";
 
 interface IconButtonProps {
-  children: ReactNode;
+  icon: ReactNode; // 通常時のアイコン
+  loadingIcon?: ReactNode; // ローディング時のアイコン（省略時はLoaderCircle）
+  children?: ReactNode; // テキストや他要素
   colorScheme?: ColorScheme;
   size?: IconButtonSize;
   onClick?: () => void;
   disabled?: boolean;
   type?: "button" | "submit";
   className?: string;
-  isPending?: boolean; // 追加
+  isPending?: boolean;
 }
 
 const colorMap: Record<ColorScheme, string> = {
@@ -30,6 +32,8 @@ const colorMap: Record<ColorScheme, string> = {
     "text-blue-600 border-blue-200 hover:bg-blue-600 hover:text-white hover:border-blue-400 hover:shadow-md focus:ring-blue-300",
   green:
     "text-green-600 border-green-200 hover:bg-green-600 hover:text-white hover:border-green-400 hover:shadow-md focus:ring-green-300",
+  black:
+    "text-white border-gray-800 bg-black hover:bg-white hover:text-black hover:border-gray-800 hover:shadow-md focus:ring-black",
 };
 
 const sizeMap: Record<IconButtonSize, string> = {
@@ -45,6 +49,8 @@ const iconSizeMap: Record<IconButtonSize, string> = {
 };
 
 export function IconButton({
+  icon,
+  loadingIcon,
   children,
   colorScheme = "gray",
   size = "s",
@@ -54,54 +60,13 @@ export function IconButton({
   className,
   isPending,
 }: IconButtonProps) {
-  // children内のSVGアイコンをpending時のみLoader2に置換、それ以外はそのまま
-  const renderChildren = () => {
-    return Children.map(children, (child) => {
-      if (
-        isPending &&
-        isValidElement(child) &&
-        typeof child.type === "string" &&
-        child.type === "svg"
-      ) {
-        // 元アイコンのsize/classNameを継承
-        const sizeProp = (child.props as { size?: number }).size ?? undefined;
-        const classNameProp = (child.props as { className?: string }).className ?? "";
-        return (
-          <Loader2
-            size={sizeProp}
-            className={clsx(classNameProp, iconSizeMap[size], "animate-spin")}
-          />
-        );
-      }
-      if (
-        isValidElement(child) &&
-        typeof child.type === "string" &&
-        child.type === "svg"
-      ) {
-        // 通常時はアイコンにサイズクラス付与
-        return cloneElement(
-          child as ReactElement<SVGProps<SVGSVGElement>>,
-          {
-            className: clsx(
-              (child.props as { className?: string }).className,
-              iconSizeMap[size]
-            ),
-          }
-        );
-      }
-      // テキストや他要素はそのまま
-      return child;
-    });
-  };
-
-  // type="submit"時のみuseFormStatus呼び出し
   let formStatusPending = false;
   if (type === "submit") {
     const status = useFormStatus();
     formStatusPending = status.pending;
   }
-
   const isDisabled = Boolean(disabled || isPending || formStatusPending);
+  const showLoader = isPending || formStatusPending;
 
   return (
     <button
@@ -109,13 +74,17 @@ export function IconButton({
       onClick={onClick}
       disabled={isDisabled}
       className={clsx(
-        "flex items-center gap-1 font-medium rounded-md cursor-pointer border shadow-sm bg-white/80 backdrop-blur-sm transition focus:outline-none focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed",
+        "flex items-center gap-1 font-medium rounded-md cursor-pointer border shadow-sm transition focus:outline-none focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed",
         sizeMap[size],
         colorMap[colorScheme],
+        colorScheme === "black" ? "bg-black" : "bg-white/80 backdrop-blur-sm",
         className
       )}
     >
-      {renderChildren()}
+      {showLoader
+        ? (loadingIcon ?? <LoaderCircle className={clsx(iconSizeMap[size], "animate-spin")} />)
+        : icon}
+      {children}
     </button>
   );
 }

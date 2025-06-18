@@ -1,9 +1,13 @@
 // 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type RefObject } from 'react'
 import { useMdData } from '@/providers/md-data-provider'
 import type { MdData } from '@/lib/mdData-crud'
 import { initialMarketingBody } from '@/lib/relative-md-data-pvd'
+import { useSaveAction } from '@/providers/save-action-provider'
+import type { ImageStore } from './markdown.client'
+import type { Session } from 'next-auth'
+import { saveMarkdownFlow } from './save-markdown-flow'
 
 /**
  * 画像URLかどうか判定
@@ -155,8 +159,6 @@ export function useInitialDataSync(allMdDatas: MdData[]) {
       updateMdData(initialMdData)
     }
   }, [initialMdData])
-
-  return initialMdData
 }
 
 /**
@@ -213,4 +215,28 @@ export function useUnsavedChanges() {
   }
 
   return { markAsSaved }
+}
+
+export function useRegisterSaveFlow(
+  mdData: MdData,
+  updateMdBody: (body: string) => void,
+  imageMapRef: RefObject<Map<string, ImageStore>>,
+  session: Session | null,
+  markAsSaved: () => void,
+) {
+  const { registerSaveAction } = useSaveAction()
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  useEffect(() => {
+    const handleSave = async () => {
+      await saveMarkdownFlow({
+        mdData,
+        updateMdBody,
+        imageMapRef,
+        session,
+        markAsSaved,
+      })
+    }
+    registerSaveAction(handleSave)
+  }, [mdData, imageMapRef, session, registerSaveAction])
 }
