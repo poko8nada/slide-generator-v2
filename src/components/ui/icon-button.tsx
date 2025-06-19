@@ -57,9 +57,9 @@ export function IconButton({
   className,
   isPending,
 }: IconButtonProps) {
+  const status = useFormStatus()
   let formStatusPending = false
   if (type === 'submit') {
-    const status = useFormStatus()
     formStatusPending = status.pending
   }
   const isDisabled = Boolean(disabled || isPending || formStatusPending)

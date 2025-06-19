@@ -31,37 +31,6 @@ export default function DisplayImageOnSheet({
       setTimeout(() => setCopiedId(null), 1200)
     }
   }
-
-  function DeleteImageForm({
-    imageId,
-    session,
-  }: {
-    imageId: string
-    session: Session | null
-  }) {
-    return (
-      <Form
-        action={async () => {
-          if (!session) return
-          const res = await handleDeleteImage({ imageId, session })
-          if (res.status === 'success') {
-            toastSuccess('画像を削除しました')
-          } else {
-            toastError(res.message)
-          }
-        }}
-      >
-        <IconButton
-          type='submit'
-          colorScheme='red'
-          icon={<Trash2 size={14} aria-label='delete' />}
-        >
-          Delete
-        </IconButton>
-      </Form>
-    )
-  }
-
   return (
     <div className='mt-10'>
       <SheetContentHeader title='Images' current={current} limit={limit} />
@@ -98,7 +67,25 @@ export default function DisplayImageOnSheet({
                 >
                   {copiedId === imageId ? 'Copied' : 'Copy'}
                 </IconButton>
-                <DeleteImageForm imageId={imageId} session={session} />
+                <Form
+                  action={async () => {
+                    if (!session) return
+                    const res = await handleDeleteImage({ imageId, session })
+                    if (res.status === 'success') {
+                      toastSuccess('画像を削除しました')
+                    } else {
+                      toastError(res.message)
+                    }
+                  }}
+                >
+                  <IconButton
+                    type='submit'
+                    colorScheme='red'
+                    icon={<Trash2 size={14} aria-label='delete' />}
+                  >
+                    Delete
+                  </IconButton>
+                </Form>
               </div>
             </div>
           )

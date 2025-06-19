@@ -4,8 +4,7 @@ import { and, desc, eq } from 'drizzle-orm'
 import { unstable_cache } from 'next/cache'
 import type { Session } from 'next-auth'
 import { db, mdDatas } from '@/db/schema'
-import { FREE_MD_LIMIT, PRO_MD_LIMIT } from './constants'
-import { NEW_MDDATA_TITLE } from './constants'
+import { FREE_MD_LIMIT, NEW_MDDATA_TITLE, PRO_MD_LIMIT } from './constants'
 
 export type MdData = InferSelectModel<typeof mdDatas>
 

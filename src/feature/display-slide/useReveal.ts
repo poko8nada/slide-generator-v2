@@ -1,8 +1,8 @@
 import hljs from 'highlight.js'
 import { type RefObject, useEffect, useRef } from 'react'
 import type Reveal from 'reveal.js'
-import markdownToHtml from '@/lib/parse'
 import { NEW_MDDATA_TITLE } from '@/lib/constants'
+import markdownToHtml from '@/lib/parse'
 
 function getSlides(md: string): Promise<string[]> {
   // Markdownをスライドに分割 (3本のハイフンのみを対象)
