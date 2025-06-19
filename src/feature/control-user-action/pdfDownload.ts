@@ -34,19 +34,65 @@ function createCloneSlides(slideSnap: HTMLElement[]) {
 
 async function imgProxy(slide: HTMLElement) {
   const images = slide.querySelectorAll('img')
-  if (images.length === 0) return Promise.resolve({ ok: true })
+
+  if (images.length === 0) return { ok: true }
 
   for (const image of images) {
     const src = image.src
-    if (src.startsWith('blob:') || src.startsWith('data:')) {
-      return Promise.resolve({ ok: true })
-    }
-    const externalUrl = encodeURIComponent(image.src)
-    const proxyUrl = `${externalUrl}&t=${Date.now()}`
 
-    image.src = `/api/image-proxy?url=${proxyUrl}`
-    return (await fetch(image.src)) || { ok: false }
+    // ログイン済みユーザーの保存済み画像をdata URLに変換（フルURLとパスの両方をチェック）
+    if (src.startsWith('/api/images/') || src.includes('/api/images/')) {
+      try {
+        const response = await fetch(image.src, {
+          credentials: 'same-origin', // 認証情報を含める
+        })
+        if (!response.ok) {
+          console.error(
+            `Failed to fetch saved image: ${image.src} (Status: ${response.status})`,
+          )
+          return { ok: false }
+        }
+
+        // 画像をdata URLに変換してsrcを置き換え
+        const blob = await response.blob()
+        const dataUrl = await new Promise<string>(resolve => {
+          const reader = new FileReader()
+          reader.onload = () => resolve(reader.result as string)
+          reader.readAsDataURL(blob)
+        })
+        image.src = dataUrl
+      } catch (error) {
+        console.error(`Error fetching saved image: ${image.src}`, error)
+        return { ok: false }
+      }
+      continue
+    }
+
+    // blob や data URL もスキップ
+    if (src.startsWith('blob:') || src.startsWith('data:')) {
+      continue
+    }
+
+    // 外部画像の場合のみプロキシ経由で処理
+    try {
+      const externalUrl = encodeURIComponent(image.src)
+      const proxyUrl = `${externalUrl}&t=${Date.now()}`
+      image.src = `/api/image-proxy?url=${proxyUrl}`
+
+      // プロキシ経由での画像取得を確認
+      const response = await fetch(image.src)
+      if (!response.ok) {
+        console.error(`Failed to fetch image: ${image.src}`)
+        return { ok: false }
+      }
+    } catch (error) {
+      console.error(`Error processing image: ${image.src}`, error)
+      return { ok: false }
+    }
   }
+
+  // 全ての画像処理が完了
+  return { ok: true }
 }
 
 function customListStyle(slide: HTMLElement) {
@@ -82,21 +128,11 @@ export async function pdfDownload(
   })
 
   for (const [index, slide] of slideClones.entries()) {
-    const res = await imgProxy(slide)
-
     try {
-      if (!res || !res.ok) {
-        const errJson =
-          res instanceof Response
-            ? await res.json()
-            : { message: 'Unknown error' }
-        console.log(errJson)
+      const res = await imgProxy(slide)
 
-        throw new Error(
-          `Slide No ${index + 1}: Failed to fetch image "${
-            (errJson as { message: string }).message
-          }"`,
-        )
+      if (!res || !res.ok) {
+        throw new Error(`Slide No ${index + 1}: Failed to fetch image`)
       }
 
       customListStyle(slide)
