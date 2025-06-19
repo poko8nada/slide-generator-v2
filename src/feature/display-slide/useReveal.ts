@@ -2,6 +2,7 @@ import hljs from 'highlight.js'
 import { type RefObject, useEffect, useRef } from 'react'
 import type Reveal from 'reveal.js'
 import markdownToHtml from '@/lib/parse'
+import { NEW_MDDATA_TITLE } from '@/lib/constants'
 
 function getSlides(md: string): Promise<string[]> {
   // Markdownをスライドに分割 (3本のハイフンのみを対象)
@@ -125,7 +126,7 @@ function fixImageHeight(
 }
 
 export function useRevealInit(
-  isNew: boolean,
+  initMDTitle: string,
   initMdData: string,
   slidesRef: RefObject<HTMLDivElement | null>,
   activeSlideIndex: number,
@@ -138,7 +139,7 @@ export function useRevealInit(
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
-    if (!isNew && !initMdData.trim()) {
+    if (initMDTitle !== NEW_MDDATA_TITLE && !initMdData.trim()) {
       return // 初期化を待つ
     }
     if (revealRef.current || isInitializing.current) {
@@ -179,7 +180,7 @@ export function useRevealInit(
     }
     init()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isNew, initMdData])
+  }, [initMDTitle, initMdData])
 
   // refはuseEffectの依存配列に含めなくてよい
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>

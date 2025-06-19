@@ -33,7 +33,7 @@ export default function DisplayMdDataItemOnSheet({
             <div
               key={item.id}
               className={cn(
-                'group bg-gray-50 hover:bg-gray-100 transition flex justify-between w-full items-center gap-1 border-b  cursor-pointer pl-4 pr-1 py-2',
+                'group bg-gray-50 hover:bg-gray-200 transition flex justify-between w-full items-center gap-1 border-b  cursor-pointer pl-4 pr-1 py-2',
                 mdData?.id === item.id && 'bg-gray-200',
               )}
             >

@@ -5,6 +5,7 @@ import { unstable_cache } from 'next/cache'
 import type { Session } from 'next-auth'
 import { db, mdDatas } from '@/db/schema'
 import { FREE_MD_LIMIT, PRO_MD_LIMIT } from './constants'
+import { NEW_MDDATA_TITLE } from './constants'
 
 export type MdData = InferSelectModel<typeof mdDatas>
 
@@ -92,7 +93,7 @@ export async function updateMdData(
 
 export async function createMdData(
   session: Session | null,
-  title = 'New mdData',
+  title = NEW_MDDATA_TITLE,
 ): Promise<MdData> {
   const user = session?.user
 

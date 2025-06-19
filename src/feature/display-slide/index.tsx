@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils'
 import { useSlide } from '@/providers/slide-container-provider'
 
 export default function DisplaySlide() {
-  const { mdData, activeSlideIndex, isNew } = useMdData()
+  const { mdData, activeSlideIndex } = useMdData()
   // const { containerRef } = useSlide()
   // const revealRef = useRef<Reveal.Api | null>(null)
   const { revealRef } = useSlide()
@@ -22,10 +22,10 @@ export default function DisplaySlide() {
   const [loading, setLoading] = useState(true)
 
   const initMdData = mdData.body
-  console.log('isNew', isNew)
+  const initMdTitle = mdData.title
 
   useRevealInit(
-    isNew,
+    initMdTitle,
     initMdData,
     slidesRef,
     activeSlideIndex,
