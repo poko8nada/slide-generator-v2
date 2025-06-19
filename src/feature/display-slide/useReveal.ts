@@ -137,7 +137,7 @@ export function useRevealInit(
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
-    if (!initMdData || initMdData.trim() === '') {
+    if (!containerRef.current) {
       return
     }
     if (revealRef.current || isInitializing.current) {
@@ -178,7 +178,7 @@ export function useRevealInit(
     }
     init()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initMdData])
+  }, [])
 
   // refはuseEffectの依存配列に含めなくてよい
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
