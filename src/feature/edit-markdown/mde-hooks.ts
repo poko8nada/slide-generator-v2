@@ -1,18 +1,31 @@
-import { useEffect } from 'react'
-import { useMdData } from '@/providers/md-data-provider'
+// 'use client'
 
+import type { Session } from 'next-auth'
+import { type RefObject, useEffect, useState } from 'react'
+import type { MdData } from '@/lib/mdData-crud'
+import { initialMarketingBody } from '@/lib/relative-md-data-pvd'
+import { useMdData } from '@/providers/md-data-provider'
+import { useSaveAction } from '@/providers/save-action-provider'
+import type { ImageStore } from './markdown.client'
+import { saveMarkdownFlow } from './save-markdown-flow'
+
+/**
+ * 画像URLかどうか判定
+ */
 function isImageUrl(url: string): boolean {
   try {
     new URL(url)
   } catch {
     return false
   }
-
   // 画像ファイルの拡張子をチェック
   const imageExtensions = /\.(jpg|jpeg|png|gif|webp|svg|bmp|ico|avif)(\?.*)?$/i
   return imageExtensions.test(url)
 }
 
+/**
+ * 画像URLをMarkdown記法でペースト
+ */
 function pasteAsImageUrl(cm: CodeMirror.Editor, event: ClipboardEvent): void {
   const clipboardData = event.clipboardData
   if (!clipboardData) return
@@ -47,6 +60,9 @@ function pasteAsImageUrl(cm: CodeMirror.Editor, event: ClipboardEvent): void {
   }
 }
 
+/**
+ * カーソル位置からアクティブスライドを更新
+ */
 function updateActiveSlide(
   mdDataBody: string | undefined,
   mdeRef: React.RefObject<{ getMdeInstance: () => EasyMDE } | null>,
@@ -68,7 +84,10 @@ function updateActiveSlide(
   setActiveSlideIndex(slideIndex)
 }
 
-export default function useMde(
+/**
+ * MDEエディタの各種イベントハンドラ
+ */
+export function useMde(
   mdeRef: React.RefObject<{ getMdeInstance: () => EasyMDE } | null>,
 ) {
   const { mdData, setActiveSlideIndex } = useMdData()
@@ -117,4 +136,107 @@ export default function useMde(
       }
     }
   }, [mdDataBody])
+}
+
+/**
+ * 初期化・スライド切替時の状態同期
+ */
+export function useInitialDataSync(allMdDatas: MdData[]) {
+  const { updateMdBody, updateMdData, mdData, isNew, setIsNew } = useMdData()
+
+  const initialMdData =
+    (isNew && allMdDatas[0]) ||
+    allMdDatas.find(s => s.id === mdData.id) ||
+    allMdDatas[0] ||
+    null
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  useEffect(() => {
+    if (!initialMdData) {
+      updateMdBody(initialMarketingBody)
+    }
+    if (initialMdData) {
+      updateMdData(initialMdData)
+    }
+  }, [initialMdData])
+}
+
+/**
+ * 未保存の変更があるかどうかを管理、保存完了時の関数を提供
+ */
+export function useUnsavedChanges() {
+  const { mdData, setIsDiff } = useMdData()
+  const [prevData, setPrevData] = useState({
+    id: '',
+    body: '',
+  })
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  useEffect(() => {
+    // 初期化時
+    if (prevData.id === '') {
+      setPrevData({
+        id: mdData.id,
+        body: initialMarketingBody,
+      })
+      return
+    }
+    // スライドが切り替わった場合、diffをfalseにする
+    if (mdData.id !== prevData.id) {
+      setIsDiff(false)
+      // 切り替わったスライドのbodyを保存
+      setPrevData({
+        id: mdData.id,
+        body: mdData.body,
+      })
+      return
+    }
+    const timer = setTimeout(() => {
+      if (mdData.body !== prevData.body) {
+        setIsDiff(true)
+        return
+      }
+      setIsDiff(false)
+    }, 700)
+
+    return () => {
+      clearTimeout(timer)
+    }
+  }, [mdData, prevData])
+
+  // 保存完了時に呼び出すメソッド
+  const markAsSaved = () => {
+    console.log('[useUnsavedChanges] 保存完了: markAsSaved呼び出し')
+    setPrevData({
+      id: mdData.id,
+      body: mdData.body,
+    })
+    setIsDiff(false)
+  }
+
+  return { markAsSaved }
+}
+
+export function useRegisterSaveFlow(
+  mdData: MdData,
+  updateMdBody: (body: string) => void,
+  imageMapRef: RefObject<Map<string, ImageStore>>,
+  session: Session | null,
+  markAsSaved: () => void,
+) {
+  const { registerSaveAction } = useSaveAction()
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  useEffect(() => {
+    const handleSave = async () => {
+      await saveMarkdownFlow({
+        mdData,
+        updateMdBody,
+        imageMapRef,
+        session,
+        markAsSaved,
+      })
+    }
+    registerSaveAction(handleSave)
+  }, [mdData, imageMapRef, session, registerSaveAction])
 }

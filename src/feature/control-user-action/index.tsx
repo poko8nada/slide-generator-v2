@@ -1,14 +1,17 @@
 'use client'
+import { Download, Save } from 'lucide-react'
+import Form from 'next/form'
+import type { Session } from 'next-auth'
+import { useState } from 'react'
 import CustomButton from '@/components/custom-button'
 import { toastError, toastSuccess } from '@/components/custom-toast'
 import { SignInBtn, SignOutBtn } from '@/components/ui/auth-btn'
+import { IconButton } from '@/components/ui/icon-button'
 import UserProfile from '@/components/user-profile'
 import { handleSignIn, handleSignOut } from '@/lib/handle-auth'
+import { useMdData } from '@/providers/md-data-provider'
+import { useSaveAction } from '@/providers/save-action-provider'
 import { useSlideSnap } from '@/providers/slide-snap-provider'
-import { Download } from 'lucide-react'
-import type { Session } from 'next-auth'
-import Form from 'next/form'
-import { useState } from 'react'
 import { pdfDownload } from './pdfDownload'
 
 export default function ControlUserAction({
@@ -16,6 +19,8 @@ export default function ControlUserAction({
 }: {
   session: Session | null
 }) {
+  const { executeSave, isSaving } = useSaveAction()
+  const { isDiff } = useMdData()
   const { slideSnap } = useSlideSnap()
   const [isLoading, setIsLoading] = useState(false)
 
@@ -34,6 +39,18 @@ export default function ControlUserAction({
   }
   return (
     <div className='flex items-center gap-4'>
+      {session && (
+        <IconButton
+          onClick={executeSave}
+          disabled={isSaving || !isDiff}
+          isPending={isSaving}
+          size='m'
+          icon={<Save />}
+          colorScheme='black'
+        >
+          save
+        </IconButton>
+      )}
       <CustomButton
         isLoading={isLoading}
         onClick={handleClick}

@@ -149,10 +149,10 @@
   object-fit: contain;
 }
 .reveal.center .slides section p code {
-  font-size: .8em;
+  font-size: 0.8em;
   background-color: #272822;
   color: #f92672;
-  padding: .15em;
+  padding: 0.15em;
 }
 
 :root {
@@ -250,7 +250,7 @@
 .reveal-print .reveal .slides div.pdf-page h2,
 .reveal-print .reveal .slides div.pdf-page h3,
 .reveal-print .reveal .slides div.pdf-page h4 {
-  margin-bottom: .3rem !important;
+  margin-bottom: 0.3rem !important;
 }
 .reveal-print .reveal .slides div.pdf-page h1 {
   font-size: calc(2.4rem * var(--reveal-custom-down-scale)) !important;
@@ -282,7 +282,7 @@
 .reveal-print .reveal .slides div.pdf-page pre,
 .reveal-print .reveal .slides blockquote,
 .reveal-print .reveal .slides div.pdf-page pre:has(code) {
-  margin: .4em auto !important;
+  margin: 0.4em auto !important;
 }
 
 .reveal-print .reveal .slides div.pdf-page li p {
@@ -298,14 +298,14 @@
 .reveal-print .reveal .slides div.pdf-page pre code,
 .reveal-print .reveal .slides div.pdf-page pre code span {
   margin: 0 !important;
-  font-size: calc(.7rem * var(--reveal-custom-down-scale)) !important;
+  font-size: calc(0.7rem * var(--reveal-custom-down-scale)) !important;
   line-height: 1.25;
 }
 .reveal-print .reveal .slides div.pdf-page pre code {
-  padding: .75em;
+  padding: 0.75em;
 }
 .reveal-print .reveal .slides div.pdf-page blockquote {
-  padding: .5em;
+  padding: 0.5em;
 }
 
 /* その他の印刷用調整 */

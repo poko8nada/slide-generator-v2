@@ -4,7 +4,11 @@ export function SheetContentHeader({
   title,
   current,
   limit,
-}: { title: string; current: number; limit: number }) {
+}: {
+  title: string
+  current: number
+  limit: number
+}) {
   return (
     <>
       <div className='flex items-center gap-2 px-4 pb-3 sticky top-0 bg-white z-10'>

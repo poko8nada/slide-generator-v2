@@ -1,5 +1,5 @@
-import markdownToHtml from '@/lib/parse'
 import { renderHook } from '@testing-library/react'
+import markdownToHtml from '@/lib/parse'
 import { useReveal } from './useReveal'
 
 jest.mock('@/lib/parse', () => jest.fn())

@@ -1,6 +1,8 @@
 export default function GeneralHeader({
   children,
-}: { children?: React.ReactNode }) {
+}: {
+  children?: React.ReactNode
+}) {
   return (
     <header className='bg-white border-b z-20'>
       <div className='mx-auto flex h-18 max-w-[1340px] items-center justify-between gap-8 px-3 sm:px-6 lg:px-6'>

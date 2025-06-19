@@ -1,21 +1,19 @@
+// クライアント側: Markdownエディタ設定・画像処理
 import type { SimpleMDEReactProps } from 'react-simplemde-editor'
 
+// 型定義
 export type ImageStore = { file: File; tempUrl: string }
 type ImageMapRef = { current: Map<string, ImageStore> }
 
+// 画像URL生成
 function getImageUrl(file: File) {
-  // Validate file type
   if (!file.type.startsWith('image/')) {
     throw new Error('The provided file is not an image.')
   }
-
-  // Validate file size (optional, e.g., max 5MB)
   const maxSizeInMB = 5
   if (file.size > maxSizeInMB * 1024 * 1024) {
     throw new Error(`File size exceeds ${maxSizeInMB}MB.`)
   }
-
-  // Determine file extension based on MIME type
   const mimeToExtension: Record<string, string> = {
     'image/png': 'png',
     'image/jpeg': 'jpg',
@@ -23,17 +21,15 @@ function getImageUrl(file: File) {
     'image/svg+xml': 'svg',
     'image/webp': 'webp',
   }
-
   const extension = mimeToExtension[file.type]
   if (!extension) {
     throw new Error('Unsupported file type')
   }
-
-  // Generate object URL and append extension
   const objectURL = URL.createObjectURL(file)
   return `${objectURL}#.${extension}`
 }
 
+// 画像アップロード関数
 function imageUploadFunction(
   file: File,
   onSuccess: (url: string) => void,
@@ -55,10 +51,12 @@ function imageUploadFunction(
   }
 }
 
+// エディタクリア
 export function clearAction(editor: EasyMDE) {
-  editor.value('') // Clear the editor content
+  editor.value('')
 }
 
+// 画像アップロードアクション
 export function imageUploadAction(editor: EasyMDE, imageMapRef?: ImageMapRef) {
   const input = document.createElement('input')
   input.type = 'file'
@@ -72,15 +70,11 @@ export function imageUploadAction(editor: EasyMDE, imageMapRef?: ImageMapRef) {
           imageMapRef.current.set(imageUrl, { file, tempUrl: imageUrl })
         }
         editor.codemirror.replaceSelection(`![Image](${imageUrl})`)
-
-        // Move the cursor to the end of the inserted text
         const cursor = editor.codemirror.getCursor()
         editor.codemirror.setCursor({
           line: cursor.line,
           ch: cursor.ch + `![Image](${imageUrl})`.length,
         })
-
-        // Refocus the editor
         editor.codemirror.focus()
       } catch (error) {
         if (error instanceof Error) {
@@ -92,6 +86,7 @@ export function imageUploadAction(editor: EasyMDE, imageMapRef?: ImageMapRef) {
   input.click()
 }
 
+// エディタオプション生成
 export const createOptions = (
   imageMapRef?: ImageMapRef,
 ): SimpleMDEReactProps['options'] => ({

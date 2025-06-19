@@ -1,10 +1,10 @@
 'use server'
-import { db, mdDatas } from '@/db/schema'
-import { desc, eq, and } from 'drizzle-orm'
-import type { Session } from 'next-auth'
-import { unstable_cache } from 'next/cache'
-import { FREE_MD_LIMIT, PRO_MD_LIMIT } from './constants'
 import type { InferSelectModel } from 'drizzle-orm'
+import { and, desc, eq } from 'drizzle-orm'
+import { unstable_cache } from 'next/cache'
+import type { Session } from 'next-auth'
+import { db, mdDatas } from '@/db/schema'
+import { FREE_MD_LIMIT, NEW_MDDATA_TITLE, PRO_MD_LIMIT } from './constants'
 
 export type MdData = InferSelectModel<typeof mdDatas>
 
@@ -92,7 +92,7 @@ export async function updateMdData(
 
 export async function createMdData(
   session: Session | null,
-  title = 'New mdData',
+  title = NEW_MDDATA_TITLE,
 ): Promise<MdData> {
   const user = session?.user
 
@@ -153,4 +153,42 @@ export async function deleteMdData(id: string, session: Session | null) {
   } catch (e) {
     throw e instanceof Error ? e : new Error('mdData削除に失敗しました')
   }
+}
+
+/**
+ * mdDataがゼロ件のときだけ1件だけ新規作成し、必ず1件以上返す
+ */
+export async function getOrCreateMdDatas(
+  session: Session | null,
+): Promise<MdData[]> {
+  if (!session?.user?.id) return []
+
+  const userId = session.user.id
+  // drizzleのトランザクションAPIを利用
+  return await db.transaction(async tx => {
+    // 1. 最新のmdDataを取得
+    let result = await tx
+      .select()
+      .from(mdDatas)
+      .where(eq(mdDatas.userId, userId))
+      .orderBy(desc(mdDatas.updatedAt))
+    if (result.length === 0) {
+      // 2. ゼロ件なら新規作成
+      const date = new Date()
+      await tx.insert(mdDatas).values({
+        userId,
+        title: 'New mdData',
+        body: '',
+        createdAt: date,
+        updatedAt: date,
+      })
+      // 3. 再取得
+      result = await tx
+        .select()
+        .from(mdDatas)
+        .where(eq(mdDatas.userId, userId))
+        .orderBy(desc(mdDatas.updatedAt))
+    }
+    return result
+  })
 }

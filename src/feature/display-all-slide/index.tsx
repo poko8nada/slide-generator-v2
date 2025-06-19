@@ -1,10 +1,10 @@
 'use client'
+import parse from 'html-react-parser'
+import { useState } from 'react'
 import Loader from '@/components/loader'
 import { useMdData } from '@/providers/md-data-provider'
 import { useSlide } from '@/providers/slide-container-provider'
 import { useSlideSnap } from '@/providers/slide-snap-provider'
-import parse from 'html-react-parser'
-import { useState } from 'react'
 import { useCustomSnap } from './useCustomSnap'
 
 export default function DisplayAllSlide() {

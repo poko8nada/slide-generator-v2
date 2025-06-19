@@ -1,6 +1,6 @@
 'use client'
-import { useMdData } from '@/providers/md-data-provider'
 import { useRef, useState } from 'react'
+import { useMdData } from '@/providers/md-data-provider'
 import 'reveal.js/dist/reveal.css'
 import 'reveal.js/dist/theme/black.css'
 import { useRevealInit, useRevealUpdate } from './useReveal'
@@ -22,8 +22,10 @@ export default function DisplaySlide() {
   const [loading, setLoading] = useState(true)
 
   const initMdData = mdData.body
+  const initMdTitle = mdData.title
 
   useRevealInit(
+    initMdTitle,
     initMdData,
     slidesRef,
     activeSlideIndex,

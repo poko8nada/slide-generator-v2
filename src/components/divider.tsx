@@ -1,7 +1,10 @@
 export default function Divider({
   title,
   className,
-}: { title: string; className?: string }) {
+}: {
+  title: string
+  className?: string
+}) {
   return (
     <div className={className}>
       <div className='flex items-center bg-background h-10'>

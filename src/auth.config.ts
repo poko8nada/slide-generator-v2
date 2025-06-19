@@ -1,7 +1,6 @@
-import type { NextAuthConfig } from 'next-auth'
-import type { JWT, DefaultSession } from 'next-auth'
+import type { DefaultSession, JWT, NextAuthConfig } from 'next-auth'
 import Google from 'next-auth/providers/google'
-import { getCachedImage, cacheImage } from './lib/image-cache'
+import { cacheImage, getCachedImage } from './lib/image-cache'
 
 // Session を拡張
 declare module 'next-auth' {

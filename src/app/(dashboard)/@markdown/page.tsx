@@ -1,6 +1,6 @@
 import { auth } from '@/auth'
 import EditMarkdown from '@/feature/edit-markdown'
-import { type MdData, getMdDatas } from '@/lib/mdData-crud'
+import { getOrCreateMdDatas, type MdData } from '@/lib/mdData-crud'
 
 export default async function MarkdownPage() {
   const session = await auth()
@@ -8,7 +8,7 @@ export default async function MarkdownPage() {
   let allMdDatas: MdData[]
 
   if (session) {
-    const slides: MdData[] = await getMdDatas(session)
+    const slides: MdData[] = await getOrCreateMdDatas(session)
     allMdDatas = slides
   } else {
     allMdDatas = []

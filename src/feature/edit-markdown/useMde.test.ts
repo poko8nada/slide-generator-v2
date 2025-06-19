@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react'
 import type EasyMDE from 'easymde'
 import React from 'react'
-import useMde from './useMde'
+import { useMde } from './mde-hooks'
 import '@testing-library/jest-dom'
 
 let mockMdeRef: React.RefObject<{ getMdeInstance: () => EasyMDE } | null>

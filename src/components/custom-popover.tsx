@@ -1,12 +1,12 @@
 'use client'
+import { EllipsisVertical } from 'lucide-react'
+import { useState } from 'react'
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
-import { EllipsisVertical } from 'lucide-react'
-import { useState } from 'react'
 
 export function CustomPopover({
   contentClassName,

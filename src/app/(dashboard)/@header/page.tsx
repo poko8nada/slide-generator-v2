@@ -2,16 +2,16 @@ import { auth } from '@/auth'
 import GeneralHeader from '@/components/general-header'
 import HeaderLogo from '@/components/header-logo'
 import ControlUserAction from '@/feature/control-user-action'
-import DisplaySheet from '@/feature/display-sheet'
-import DisplayMdDataItemOnSheet from '@/feature/display-mdDataItem-onSheet'
-import { type MdData, getMdDatas } from '@/lib/mdData-crud'
-import { getCountInfo } from './getCountAction'
 import DisplayImageOnSheet from '@/feature/display-image-onSheet'
+import DisplayMdDataItemOnSheet from '@/feature/display-mdDataItem-onSheet'
+import DisplaySheet from '@/feature/display-sheet'
 import { getCloudFlareImageIds } from '@/lib/imageId-crud'
+import { getOrCreateMdDatas, type MdData } from '@/lib/mdData-crud'
+import { getCountInfo } from './getCountAction'
 
 export default async function Page() {
   const session = await auth()
-  const mdDatas: MdData[] = await getMdDatas(session)
+  const mdDatas: MdData[] = await getOrCreateMdDatas(session)
   const cloudFlareImageIds = await getCloudFlareImageIds(session)
 
   const mdDataCount = getCountInfo({

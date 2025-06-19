@@ -1,7 +1,8 @@
-import markdownToHtml from '@/lib/parse'
 import hljs from 'highlight.js'
 import { type RefObject, useEffect, useRef } from 'react'
 import type Reveal from 'reveal.js'
+import { NEW_MDDATA_TITLE } from '@/lib/constants'
+import markdownToHtml from '@/lib/parse'
 
 function getSlides(md: string): Promise<string[]> {
   // Markdownをスライドに分割 (3本のハイフンのみを対象)
@@ -83,15 +84,10 @@ function fixImageHeight(
   const sections = slidesRef.current?.querySelectorAll('section')
   const heightStyles = sections
     ? Array.from(sections).map((section, index) => {
-        section.removeAttribute('style')
-        section.removeAttribute('class')
-        section.removeAttribute('hidden')
-        section.style.display = 'block'
+        // 状態初期化は prepareSlidesForMeasurement で実行済み
         const images = section.querySelectorAll('img')
 
         if (images.length === 0) return
-
-        section.classList.add(`section_${index}`)
 
         const usedHeight = Array.from(section.children)
           .filter(child => {
@@ -109,10 +105,41 @@ function fixImageHeight(
 
         const imgHeight = Math.floor((slideHeight - usedHeight) / images.length)
 
-        const pdfImgHeight = Math.floor(
-          // 70 はマジックナンバーで手動調整
-          (imgHeight * (70 / slideHeight)) / images.length,
-        )
+        // RevealJSの実際のレンダリング結果を取得
+        const actualRevealImgHeight = (() => {
+          if (images.length > 0) {
+            const actualHeight = images[0].getBoundingClientRect().height
+            return actualHeight
+          }
+          return imgHeight
+        })()
+
+        // PDF一覧の高さを計算（CSS変数から取得）
+        const pdfSlideHeight = 225 // calc(300px / 400 * 300) = 225px
+        const heightRatio = pdfSlideHeight / slideHeight
+
+        // PDF一覧での画像高さ計算：はみ出しを防ぐため制約を設ける
+        let pdfImgHeight: number
+
+        if (images.length === 0) {
+          pdfImgHeight = 0
+        } else {
+          // RevealJSの実際のサイズをベースに計算
+          const basePdfImgHeight = Math.floor(
+            actualRevealImgHeight * heightRatio,
+          )
+
+          // PDF一覧でのテキスト部分の推定高さ（タイトル、マージンなど）
+          const estimatedTextHeight = 50 // h1/h2タイトル + マージン + 安全マージン
+          const availableHeightForImages = pdfSlideHeight - estimatedTextHeight
+
+          // 複数画像の場合は、利用可能な高さを超えないよう制約
+          const maxHeightPerImage = Math.floor(
+            availableHeightForImages / images.length,
+          )
+
+          pdfImgHeight = Math.min(basePdfImgHeight, maxHeightPerImage)
+        }
 
         return `.section_${index} img{height: ${imgHeight}px;} .pdf-page .section_${index} img{height: ${pdfImgHeight}px;}`
       })
@@ -124,7 +151,24 @@ function fixImageHeight(
   }
 }
 
+function prepareSlidesForMeasurement(
+  slidesRef: RefObject<HTMLDivElement | null>,
+): void {
+  const sections = slidesRef.current?.querySelectorAll('section')
+  if (!sections) return
+
+  Array.from(sections).forEach((section, index) => {
+    // スライド状態の初期化
+    section.removeAttribute('style')
+    section.removeAttribute('class')
+    section.removeAttribute('hidden')
+    section.style.display = 'block'
+    section.classList.add(`section_${index}`)
+  })
+}
+
 export function useRevealInit(
+  initMDTitle: string,
   initMdData: string,
   slidesRef: RefObject<HTMLDivElement | null>,
   activeSlideIndex: number,
@@ -137,8 +181,8 @@ export function useRevealInit(
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
-    if (!initMdData || initMdData.trim() === '') {
-      return
+    if (initMDTitle !== NEW_MDDATA_TITLE && !initMdData.trim()) {
+      return // 初期化を待つ
     }
     if (revealRef.current || isInitializing.current) {
       return
@@ -167,6 +211,7 @@ export function useRevealInit(
         const slides = await getSlides(initMdData)
         setSlides(slides, slidesRef, revealRef, 0)
         await revealRef.current.initialize()
+        prepareSlidesForMeasurement(slidesRef)
         fixImageHeight(slidesRef, styleRef)
         updateSlides(activeSlideIndex, revealRef)
         setLoading(false)
@@ -178,7 +223,7 @@ export function useRevealInit(
     }
     init()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initMdData])
+  }, [initMDTitle, initMdData])
 
   // refはuseEffectの依存配列に含めなくてよい
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
@@ -209,6 +254,7 @@ export function useRevealUpdate(
       try {
         const slides = await getSlides(mdData)
         setSlides(slides, slidesRef, revealRef, 0)
+        prepareSlidesForMeasurement(slidesRef)
         fixImageHeight(slidesRef, styleRef)
         updateSlides(activeSlideIndex, revealRef)
       } catch (error) {

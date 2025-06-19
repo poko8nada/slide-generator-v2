@@ -1,12 +1,12 @@
 'use client'
-import { useState } from 'react'
-import { Trash2, Check, Copy as CopyIcon } from 'lucide-react'
-import { SheetContentHeader } from '@/components/sheet-content-header'
-import type { Session } from 'next-auth'
-import { handleDeleteImage } from './handle-delete-image'
-import { toastSuccess, toastError } from '@/components/custom-toast'
+import { Check, Copy as CopyIcon, Trash2 } from 'lucide-react'
 import Form from 'next/form'
-import { useFormStatus } from 'react-dom'
+import type { Session } from 'next-auth'
+import { useState } from 'react'
+import { toastError, toastSuccess } from '@/components/custom-toast'
+import { SheetContentHeader } from '@/components/sheet-content-header'
+import { IconButton } from '@/components/ui/icon-button'
+import { handleDeleteImage } from './handle-delete-image'
 
 export default function DisplayImageOnSheet({
   cloudFlareImageIds,
@@ -31,37 +31,6 @@ export default function DisplayImageOnSheet({
       setTimeout(() => setCopiedId(null), 1200)
     }
   }
-
-  function DeleteImageForm({
-    imageId,
-    session,
-  }: { imageId: string; session: Session | null }) {
-    const { pending } = useFormStatus()
-    return (
-      <Form
-        action={async () => {
-          if (!session) return
-          const res = await handleDeleteImage({ imageId, session })
-          if (res.status === 'success') {
-            toastSuccess('画像を削除しました')
-          } else {
-            toastError(res.message)
-          }
-        }}
-      >
-        <button
-          type='submit'
-          className='flex items-center gap-1 text-red-500 text-xs font-medium px-2 py-1 rounded-md cursor-pointer border border-red-200 shadow-sm bg-white/80 backdrop-blur-sm transition
-          hover:bg-red-500 hover:text-white hover:shadow-md hover:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-300'
-          disabled={pending}
-        >
-          <Trash2 size={14} aria-label='delete' />
-          Delete
-        </button>
-      </Form>
-    )
-  }
-
   return (
     <div className='mt-10'>
       <SheetContentHeader title='Images' current={current} limit={limit} />
@@ -84,25 +53,39 @@ export default function DisplayImageOnSheet({
                 }}
               />
               <div className='absolute inset-0 flex flex-col justify-center items-center gap-2 p-2 group-hover:opacity-100 opacity-0 transition-opacity ease-in duration-200 bg-gray-100/80'>
-                <button
+                <IconButton
                   type='button'
-                  className='flex items-center gap-1 text-gray-700 text-xs font-medium px-2 py-1 rounded-md cursor-pointer border border-gray-300 shadow-sm bg-white/80 backdrop-blur-sm transition
-                  hover:bg-gray-700 hover:text-white hover:shadow-md hover:border-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-400'
+                  colorScheme='gray'
+                  icon={
+                    copiedId === imageId ? (
+                      <Check size={14} aria-label='copied' />
+                    ) : (
+                      <CopyIcon size={14} aria-label='copy' />
+                    )
+                  }
                   onClick={() => handleCopy(src, imageId)}
                 >
-                  {copiedId === imageId ? (
-                    <>
-                      <Check size={14} aria-label='copied' />
-                      Copied
-                    </>
-                  ) : (
-                    <>
-                      <CopyIcon size={14} aria-label='copy' />
-                      Copy
-                    </>
-                  )}
-                </button>
-                <DeleteImageForm imageId={imageId} session={session} />
+                  {copiedId === imageId ? 'Copied' : 'Copy'}
+                </IconButton>
+                <Form
+                  action={async () => {
+                    if (!session) return
+                    const res = await handleDeleteImage({ imageId, session })
+                    if (res.status === 'success') {
+                      toastSuccess('画像を削除しました')
+                    } else {
+                      toastError(res.message)
+                    }
+                  }}
+                >
+                  <IconButton
+                    type='submit'
+                    colorScheme='red'
+                    icon={<Trash2 size={14} aria-label='delete' />}
+                  >
+                    Delete
+                  </IconButton>
+                </Form>
               </div>
             </div>
           )

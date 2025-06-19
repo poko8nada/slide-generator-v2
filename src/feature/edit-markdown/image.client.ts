@@ -1,4 +1,6 @@
-import type { ImageStore } from './markdownAction'
+'use client'
+
+import type { ImageStore } from './markdown.client'
 
 // /api/images/...ではじまる画像URLを取り除く
 export async function removeCloudflareImageUrls(
