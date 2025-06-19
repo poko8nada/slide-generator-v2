@@ -2,7 +2,11 @@ export function CountIndicator({
   current,
   limit,
   size = 'md',
-}: { current: number; limit: number; size?: 'xs' | 'sm' | 'md' }) {
+}: {
+  current: number
+  limit: number
+  size?: 'xs' | 'sm' | 'md'
+}) {
   const isLimit = current >= limit
   const sizeClass =
     size === 'xs'

@@ -1,6 +1,6 @@
 'use client'
 import type React from 'react'
-import { type ReactNode, createContext, useContext, useRef } from 'react'
+import { createContext, type ReactNode, useContext, useRef } from 'react'
 
 interface SlideContainerContextProps {
   // containerRef: React.RefObject<HTMLDivElement | null>

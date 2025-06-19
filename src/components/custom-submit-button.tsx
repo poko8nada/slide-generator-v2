@@ -1,8 +1,8 @@
 'use client'
 import { LoaderCircle } from 'lucide-react'
-import { Button } from './ui/button'
-import { cn } from '@/lib/utils'
 import { useFormStatus } from 'react-dom'
+import { cn } from '@/lib/utils'
+import { Button } from './ui/button'
 
 export default function CustomSubmitButton({
   children,

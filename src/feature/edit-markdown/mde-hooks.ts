@@ -1,12 +1,12 @@
 // 'use client'
 
-import { useEffect, useState, type RefObject } from 'react'
-import { useMdData } from '@/providers/md-data-provider'
+import type { Session } from 'next-auth'
+import { type RefObject, useEffect, useState } from 'react'
 import type { MdData } from '@/lib/mdData-crud'
 import { initialMarketingBody } from '@/lib/relative-md-data-pvd'
+import { useMdData } from '@/providers/md-data-provider'
 import { useSaveAction } from '@/providers/save-action-provider'
 import type { ImageStore } from './markdown.client'
-import type { Session } from 'next-auth'
 import { saveMarkdownFlow } from './save-markdown-flow'
 
 /**
@@ -142,7 +142,7 @@ export function useMde(
  * 初期化・スライド切替時の状態同期
  */
 export function useInitialDataSync(allMdDatas: MdData[]) {
-  const { updateMdBody, updateMdData, mdData, isNew } = useMdData()
+  const { updateMdBody, updateMdData, mdData, isNew, setIsNew } = useMdData()
 
   const initialMdData =
     (isNew && allMdDatas[0]) ||

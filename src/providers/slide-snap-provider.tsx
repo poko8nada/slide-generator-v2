@@ -1,6 +1,7 @@
 'use client'
 import type React from 'react'
-import { type ReactNode, createContext, useContext, useState } from 'react'
+import { createContext, type ReactNode, useContext, useState } from 'react'
+
 // Create the context
 const SlideSnapContext = createContext<
   | {

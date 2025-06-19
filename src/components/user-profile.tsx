@@ -1,3 +1,5 @@
+import type { Session } from 'next-auth'
+import React from 'react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -6,13 +8,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import type { Session } from 'next-auth'
-import React from 'react'
 
 export default function UserProfile({
   children,
   session,
-}: { children: React.ReactNode; session: Session }) {
+}: {
+  children: React.ReactNode
+  session: Session
+}) {
   if (!session.user) return null
   return (
     <div className='flex items-center gap-2'>

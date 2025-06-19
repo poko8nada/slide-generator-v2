@@ -1,9 +1,9 @@
 // src/app/api/images/[imageId]/route.ts
-import { NextResponse } from 'next/server'
+
 import { eq } from 'drizzle-orm'
-import { db } from '@/db/schema'
-import { images } from '@/db/schema'
+import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
+import { db, images } from '@/db/schema'
 
 const CLOUDFLARE_IMAGES_URL = `https://imagedelivery.net/${process.env.CLOUDFLARE_ACCOUNT_HASH}`
 

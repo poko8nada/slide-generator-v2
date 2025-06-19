@@ -1,7 +1,7 @@
-import markdownToHtml from '@/lib/parse'
 import hljs from 'highlight.js'
 import { type RefObject, useEffect, useRef } from 'react'
 import type Reveal from 'reveal.js'
+import markdownToHtml from '@/lib/parse'
 
 function getSlides(md: string): Promise<string[]> {
   // Markdownをスライドに分割 (3本のハイフンのみを対象)
@@ -125,6 +125,7 @@ function fixImageHeight(
 }
 
 export function useRevealInit(
+  isNew: boolean,
   initMdData: string,
   slidesRef: RefObject<HTMLDivElement | null>,
   activeSlideIndex: number,
@@ -137,8 +138,8 @@ export function useRevealInit(
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
-    if (!containerRef.current) {
-      return
+    if (!isNew && !initMdData.trim()) {
+      return // 初期化を待つ
     }
     if (revealRef.current || isInitializing.current) {
       return
@@ -178,7 +179,7 @@ export function useRevealInit(
     }
     init()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [isNew, initMdData])
 
   // refはuseEffectの依存配列に含めなくてよい
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>

@@ -1,9 +1,9 @@
+import { auth } from '@/auth'
 import Divider from '@/components/divider'
 import { MdDataProvider } from '@/providers/md-data-provider'
+import { SaveActionProvider } from '@/providers/save-action-provider'
 import { SlideContainerProvider } from '@/providers/slide-container-provider'
 import { SlideSnapProvider } from '@/providers/slide-snap-provider'
-import { auth } from '@/auth'
-import { SaveActionProvider } from '@/providers/save-action-provider'
 
 export default async function DashboardLayout({
   children,

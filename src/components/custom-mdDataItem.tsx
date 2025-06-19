@@ -1,14 +1,10 @@
 'use client'
 import { Label } from '@/components/ui/label'
 import type { MdData } from '@/lib/mdData-crud'
-import { useMdData } from '@/providers/md-data-provider'
 import { confirmUnsaved } from '@/lib/unsaved-warning'
+import { useMdData } from '@/providers/md-data-provider'
 
-export default function CustomMdDataItem({
-  mdData,
-}: {
-  mdData: MdData
-}) {
+export default function CustomMdDataItem({ mdData }: { mdData: MdData }) {
   if (!mdData) return null
 
   const { updateMdData, isDiff, mdData: selectedMdData, setIsNew } = useMdData()
@@ -22,7 +18,7 @@ export default function CustomMdDataItem({
 
   return (
     <div
-      className='flex items-center w-full'
+      className='flex items-center w-full cursor-pointer'
       onClick={handleMdDataSelect}
       onKeyDown={e => {
         if ((e.key === 'Enter' || e.key === ' ') && confirmUnsaved(isDiff)) {
@@ -31,7 +27,7 @@ export default function CustomMdDataItem({
         }
       }}
     >
-      <Label htmlFor={id} className='block w-full'>
+      <Label htmlFor={id} className='block w-full cursor-pointer'>
         <input
           type='radio'
           value={id}

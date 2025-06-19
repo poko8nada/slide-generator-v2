@@ -1,5 +1,5 @@
-import { isAllowedHost } from '@/lib/white-list'
 import { type NextRequest, NextResponse } from 'next/server'
+import { isAllowedHost } from '@/lib/white-list'
 
 export async function GET(req: NextRequest) {
   const url = req.nextUrl.searchParams.get('url')

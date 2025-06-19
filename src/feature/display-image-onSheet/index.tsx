@@ -1,12 +1,12 @@
 'use client'
-import { IconButton } from '@/components/ui/icon-button'
-import { useState } from 'react'
-import { Trash2, Check, Copy as CopyIcon } from 'lucide-react'
-import { SheetContentHeader } from '@/components/sheet-content-header'
-import type { Session } from 'next-auth'
-import { handleDeleteImage } from './handle-delete-image'
-import { toastSuccess, toastError } from '@/components/custom-toast'
+import { Check, Copy as CopyIcon, Trash2 } from 'lucide-react'
 import Form from 'next/form'
+import type { Session } from 'next-auth'
+import { useState } from 'react'
+import { toastError, toastSuccess } from '@/components/custom-toast'
+import { SheetContentHeader } from '@/components/sheet-content-header'
+import { IconButton } from '@/components/ui/icon-button'
+import { handleDeleteImage } from './handle-delete-image'
 
 export default function DisplayImageOnSheet({
   cloudFlareImageIds,
@@ -35,7 +35,10 @@ export default function DisplayImageOnSheet({
   function DeleteImageForm({
     imageId,
     session,
-  }: { imageId: string; session: Session | null }) {
+  }: {
+    imageId: string
+    session: Session | null
+  }) {
     return (
       <Form
         action={async () => {
