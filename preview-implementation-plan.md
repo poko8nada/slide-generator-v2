@@ -44,18 +44,20 @@ CREATE INDEX idx_share_tokens_token ON share_tokens(token);
 CREATE INDEX idx_share_tokens_expires_at ON share_tokens(expires_at);
 ```
 
-### 2. APIエンドポイント設計
+### 2. サーバーアクション設計
 ```typescript
-// POST /api/share/create
+// actions/share-actions.ts
 // トークン生成と有効期限設定
-{
-  mdDataId: number,
-  expiresInHours: number
-}
+export async function createShareToken(
+  mdDataId: number, 
+  expiresInHours: number = 24
+): Promise<{ token: string; shareUrl: string; expiresAt: Date }>
 
-// GET /api/share/[token]
-// トークン検証とデータ取得
-// 期限切れチェック → 切れてたら削除
+// app/share/[token]/page.tsx
+// サーバーコンポーネントで直接DB照会
+async function getSharedSlide(token: string) {
+  // トークン検証 + 期限切れチェック → 切れてたら削除
+}
 ```
 
 ### 3. Reveal.js 関数の共通化
@@ -73,22 +75,17 @@ src/
 ├── app/
 │   └── share/
 │       └── [token]/
-│           └── page.tsx              # 共有ページ（新しいReveal.jsインスタンス）
-├── api/
-│   └── share/
-│       ├── create/
-│       │   └── route.ts             # トークン生成API
-│       └── [token]/
-│           └── route.ts             # トークン検証・データ取得API
+│           └── page.tsx              # 共有ページ（サーバーコンポーネント）
 ├── feature/
 │   └── share-slide/
 │       ├── index.tsx                # 共有機能のメインコンポーネント
-│       ├── useShareSlide.ts         # 共有フック
+│       ├── useShareSlide.ts         # 共有フック（サーバーアクション呼び出し）
 │       └── ShareSlideViewer.tsx     # 共有用スライドビューア
+│       └── share-actions.ts             # サーバーアクション（トークン生成）
 ├── lib/
 │   └── reveal-utils.ts              # useRevealから移動した共通関数
 └── db/
-    └── schema.ts              # 共有トークンのスキーマ定義を追加
+    └── schema.ts                    # 共有トークンのスキーマ定義を追加
 ```
 
 ### 既存ファイルの変更
@@ -101,17 +98,17 @@ src/
 ### Phase 1: 基盤構築
 1. **共通関数の抽出**: `useReveal.ts` → `lib/reveal-utils.ts`
 2. **データベース設計**: `share_tokens` テーブル作成
-3. **API設計**: トークン生成・検証API
+3. **サーバーアクション設計**: `share-actions.ts`
 
 ### Phase 2: feature/share-slide 実装
-1. **useShareSlide**: トークン生成フック
+1. **useShareSlide**: サーバーアクション呼び出しフック
 2. **ShareSlideViewer**: 共有用Reveal.jsビューア
 3. **共有ボタン**: 既存UIへの統合
 
 ### Phase 3: app/share/[token] 実装
-1. **共有ページ**: 新しいReveal.jsインスタンス生成
+1. **共有ページ**: サーバーコンポーネントでの直接DB照会
 2. **トークン検証**: 有効期限チェック・削除
-3. **エラーハンドリング**: 無効トークンの処理
+3. **エラーハンドリング**: 無効トークンの処理（notFound()使用）
 
 ### Phase 4: display-slide リファクタ
 1. **useReveal更新**: `reveal-utils.ts`の関数を使用
@@ -239,15 +236,38 @@ export function ShareSlideViewer({
 ```typescript
 import { ShareSlideViewer } from '@/feature/share-slide/ShareSlideViewer'
 import { notFound } from 'next/navigation'
+import { db } from '@/db'
+import { shareTokens } from '@/db/schema'
+import { eq, and, gt } from 'drizzle-orm'
 
 async function getSharedSlide(token: string) {
-  const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/share/${token}`)
+  const now = new Date()
   
-  if (!response.ok) {
+  // トークン検証（有効期限もチェック）
+  const shareToken = await db.query.shareTokens.findFirst({
+    where: and(
+      eq(shareTokens.token, token),
+      eq(shareTokens.isActive, true),
+      gt(shareTokens.expiresAt, now)
+    )
+  })
+
+  if (!shareToken) {
+    // 期限切れレコードを削除
+    await db.delete(shareTokens).where(
+      and(
+        eq(shareTokens.token, token),
+        eq(shareTokens.isActive, true)
+      )
+    )
     return null
   }
-  
-  return response.json()
+
+  return {
+    mdData: shareToken.mdDataSnapshot,
+    createdAt: shareToken.createdAt,
+    expiresAt: shareToken.expiresAt,
+  }
 }
 
 export default async function SharePage({ 
@@ -270,29 +290,32 @@ export default async function SharePage({
 }
 ```
 
-### 4. api/share/create/route.ts
+### 4. actions/share-actions.ts
 ```typescript
-import { NextRequest, NextResponse } from 'next/server'
+'use server'
+
 import { v4 as uuidv4 } from 'uuid'
 import { db } from '@/db'
-import { shareTokens } from '@/db/schema'
+import { shareTokens, mdData } from '@/db/schema'
 import { auth } from '@/auth'
+import { eq } from 'drizzle-orm'
 
-export async function POST(request: NextRequest) {
+export async function createShareToken(
+  mdDataId: number, 
+  expiresInHours: number = 24
+) {
   const session = await auth()
   if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    throw new Error('Unauthorized')
   }
 
-  const { mdDataId, expiresInHours = 24 } = await request.json()
-  
   // mdDataを取得
-  const mdData = await db.query.mdData.findFirst({
-    where: (mdData, { eq }) => eq(mdData.id, mdDataId)
+  const mdDataRecord = await db.query.mdData.findFirst({
+    where: eq(mdData.id, mdDataId)
   })
   
-  if (!mdData) {
-    return NextResponse.json({ error: 'Data not found' }, { status: 404 })
+  if (!mdDataRecord) {
+    throw new Error('Data not found')
   }
 
   const token = uuidv4()
@@ -302,46 +325,47 @@ export async function POST(request: NextRequest) {
     token,
     userId: session.user.id,
     mdDataId,
-    mdDataSnapshot: mdData.content,
+    mdDataSnapshot: mdDataRecord.content,
     expiresAt,
   })
 
-  return NextResponse.json({
+  return {
     token,
     shareUrl: `${process.env.NEXT_PUBLIC_APP_URL}/share/${token}`,
     expiresAt,
-  })
-}
+  }
 ```
 
-### 5. api/share/[token]/route.ts
+### 5. feature/share-slide/useShareSlide.ts
 ```typescript
-import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/db'
-import { shareTokens } from '@/db/schema'
-import { eq, and, gt } from 'drizzle-orm'
+import { useState } from 'react'
+import { createShareToken } from '@/actions/share-actions'
 
-export async function GET(
-  request: NextRequest,
-  { params: { token } }: { params: { token: string } }
-) {
-  const now = new Date()
-  
-  // トークン検証（有効期限もチェック）
-  const shareToken = await db.query.shareTokens.findFirst({
-    where: and(
-      eq(shareTokens.token, token),
-      eq(shareTokens.isActive, true),
-      gt(shareTokens.expiresAt, now)
-    )
-  })
+export function useShareSlide() {
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  if (!shareToken) {
-    // 期限切れレコードを削除
-    await db.delete(shareTokens).where(
-      and(
-        eq(shareTokens.token, token),
-        eq(shareTokens.isActive, true)
+  const createShare = async (mdDataId: number, expiresInHours: number = 24) => {
+    setIsLoading(true)
+    setError(null)
+    
+    try {
+      const result = await createShareToken(mdDataId, expiresInHours)
+      return result
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error')
+      throw err
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return {
+    createShare,
+    isLoading,
+    error,
+  }
+}
       )
     )
     
@@ -375,13 +399,20 @@ export async function GET(
 
 ## 完了条件
 - [ ] `lib/reveal-utils.ts`への関数抽出完了
+- [ ] `actions/share-actions.ts`のサーバーアクション実装完了
 - [ ] `feature/share-slide`ディレクトリの実装完了
-- [ ] `app/share/[token]`ページの実装完了  
-- [ ] トークン生成・検証APIの実装完了
+- [ ] `app/share/[token]`ページ（サーバーコンポーネント）の実装完了  
 - [ ] 既存`display-slide`のリファクタ完了
 - [ ] 有効期限チェック・削除機能の動作確認
 - [ ] 新しいReveal.jsインスタンスの動作確認
+- [ ] サーバーアクションのエラーハンドリング確認
 - [ ] セキュリティテストの実施
+
+## サーバーアクションのメリット
+- **型安全性**: フロントエンドとバックエンド間の型推論
+- **パフォーマンス**: APIルートを経由しない直接DB接続
+- **シンプルさ**: フェッチ処理・JSON変換が不要
+- **一貫性**: Next.js App Routerのベストプラクティス
 
 ---
 
