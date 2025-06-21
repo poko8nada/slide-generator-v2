@@ -21,6 +21,7 @@ declare module 'next-auth' {
 }
 
 export default {
+  trustHost: true, // すべてのlocalhostを信頼
   providers: [Google],
   callbacks: {
     async jwt({ token, user, account }) {

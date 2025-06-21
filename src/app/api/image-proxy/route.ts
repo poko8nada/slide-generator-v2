@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server'
-import { isAllowedHost } from '@/lib/white-list'
+import { isAllowedHost } from '@/lib/black-list'
 
 export async function GET(req: NextRequest) {
   const url = req.nextUrl.searchParams.get('url')
@@ -26,10 +26,7 @@ export async function GET(req: NextRequest) {
   }
 
   if (!isAllowedHost(hostname)) {
-    return NextResponse.json(
-      { message: 'Blocked by whitelist' },
-      { status: 403 },
-    )
+    return NextResponse.json({ message: 'Blocked' }, { status: 403 })
   }
 
   try {

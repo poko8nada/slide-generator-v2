@@ -1,4 +1,8 @@
-export default function UserLevel({ isPro }: { isPro: boolean }) {
+export default function UserLevel({
+  isPro,
+  isLoggedIn,
+}: { isPro: boolean; isLoggedIn: boolean }) {
+  if (!isLoggedIn) return null
   return (
     <div>
       {isPro ? (
@@ -6,7 +10,7 @@ export default function UserLevel({ isPro }: { isPro: boolean }) {
           PRO
         </span>
       ) : (
-        <span className='ml-1 px-2 py-0.5 rounded-full bg-gray-200 text-gray-500 text-xs font-semibold border border-gray-300'>
+        <span className='ml-1 px-2 py-0.5 rounded-full bg-gray-200 text-gray-500 text-xs font-semibold'>
           free
         </span>
       )}
