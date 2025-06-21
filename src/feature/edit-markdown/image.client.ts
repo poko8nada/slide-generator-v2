@@ -20,14 +20,19 @@ function extractExternalImageUrls(markdown: string): string[] {
 export async function fetchAndRegisterExternalImages(
   markdown: string,
   imageMap: Map<string, ImageStore>,
-) {
+): Promise<string[]> {
   const urls = extractExternalImageUrls(markdown)
+  const blockedUrls: string[] = []
   for (const url of urls) {
     if (!imageMap.has(url)) {
       try {
         const res = await fetch(
           `/api/image-proxy?url=${encodeURIComponent(url)}`,
         )
+        if (res.status === 403) {
+          blockedUrls.push(url)
+          continue
+        }
         const blob = await res.blob()
         const ext = blob.type.split('/')[1] || 'png'
         const file = new File([blob], `external.${ext}`, { type: blob.type })
@@ -38,4 +43,5 @@ export async function fetchAndRegisterExternalImages(
       }
     }
   }
+  return blockedUrls
 }

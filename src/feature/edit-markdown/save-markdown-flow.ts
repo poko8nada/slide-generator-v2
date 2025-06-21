@@ -36,8 +36,8 @@ async function detectAndRemoveDeletedImages(
 async function registerExternalImages(
   mdBody: string,
   imageMap: Map<string, ImageStore>,
-) {
-  await fetchAndRegisterExternalImages(mdBody, imageMap)
+): Promise<string[]> {
+  return await fetchAndRegisterExternalImages(mdBody, imageMap)
 }
 
 // 画像アップロードとDB upsert
@@ -99,7 +99,10 @@ export async function saveMarkdownFlow({
     // mdBody = await removeCloudflareImageUrls(mdBody)
 
     // 3. 外部画像fetch・登録
-    await registerExternalImages(mdBody, imageMapRef.current)
+    const blockedUrls = await registerExternalImages(
+      mdBody,
+      imageMapRef.current,
+    )
     // 4. 画像アップロードとDB upsert
     const uploadedImages = await uploadImagesAndUpsertDb(
       imageMapRef.current,
@@ -111,7 +114,28 @@ export async function saveMarkdownFlow({
     handleUpdateMdData(mdData.id, replacedMd, session)
     updateMdBody(replacedMd)
     markAsSaved()
-    toastSuccess('画像アップロード・DB保存・Markdown置換完了')
+    if (blockedUrls.length > 0) {
+      // blockedUrlsからホスト名のみ抽出し重複排除
+      const hostnames = Array.from(
+        new Set(
+          blockedUrls.map(url => {
+            try {
+              return new URL(url).hostname
+            } catch {
+              return url
+            }
+          }),
+        ),
+      )
+      // ホスト名をテキストで整形
+      const hostList = hostnames.join('\n')
+      const msg = `保存は完了しましたが、以下のホストの画像は利用できません（ブラックリスト）\n${hostList}`
+      // toastWarningをimportして使用
+      // @ts-ignore
+      import('@/components/custom-toast').then(m => m.toastWarning(msg))
+    } else {
+      toastSuccess('画像アップロード・DB保存・Markdown置換完了')
+    }
   } catch (e) {
     toastError(e instanceof Error ? e.message : '保存に失敗しました')
   } finally {
