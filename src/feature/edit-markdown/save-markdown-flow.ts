@@ -129,7 +129,7 @@ export async function saveMarkdownFlow({
       )
       // ホスト名をテキストで整形
       const hostList = hostnames.join('\n')
-      const msg = `保存は完了しましたが、以下のホストの画像は利用できません（ブラックリスト）\n${hostList}`
+      const msg = `Markdown保存は完了しましたが、以下のホストの画像は保存できません（ブラックリスト）\n${hostList}`
       // toastWarningをimportして使用
       // @ts-ignore
       import('@/components/custom-toast').then(m => m.toastWarning(msg))

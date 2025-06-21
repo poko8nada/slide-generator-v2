@@ -11,6 +11,7 @@ import { getCountInfo } from './getCountAction'
 
 export default async function Page() {
   const session = await auth()
+  const isLoggedIn = !!session
   const mdDatas: MdData[] = await getOrCreateMdDatas(session)
   const cloudFlareImageIds = await getCloudFlareImageIds(session)
 
@@ -48,7 +49,7 @@ export default async function Page() {
               </div>
             </DisplaySheet>
           )}
-          <HeaderLogo isPro={mdDataCount.isPro} />
+          <HeaderLogo isPro={mdDataCount.isPro} isLoggedIn={isLoggedIn} />
         </div>
         <ControlUserAction session={session} />
       </GeneralHeader>
