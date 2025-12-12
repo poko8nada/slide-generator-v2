@@ -28,6 +28,7 @@
 - [x] Cloudflare ImagesのURLを自前APIエンドポイントで変換・中継して返す（CloudflareのURLを直接見せない）
 - [x] 画像数上限の実装
 - [x] ブラックリスト作成
+- [ ] 🟢Next:alt文言調整
 
 ## mdData、imageのシートコンポーネントでの一覧表示
 - [x] シートコンポーネント作成
