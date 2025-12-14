@@ -15,7 +15,6 @@ export default async function DashboardLayout({
   markdown: React.ReactNode
   slide: React.ReactNode
   header: React.ReactNode
-  sheet: React.ReactNode
 }) {
   const session = await auth()
   return (
